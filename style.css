@@ -19,14 +19,18 @@
 
 :root[data-theme="dark"] {
     --bg-color:var(--base03);  /* brblack */
+    --alt-bg-color: var(--base02); /* black */
     --text-color: var(--base0);
     --header-color: var(--base1);
+    --link-color: var(--blue);
 }
 
 :root[data-theme="light"] { 
     --bg-color: var(--base3);   /* brwhite */
+    --alt-bg-color: var(--base2); /* white */
     --text-color: var(--base02);
     --header-color: var(--base03);
+    --link-color: var(--blue);
 }
 
 @media (prefers-color-scheme: light) {
@@ -34,6 +38,7 @@
         --bg-color: var(--base3);
         --text-color: var(--base02);
         --header-color: var(--base03);
+        --link-color: var(--blue);
     }
 }
 
@@ -43,12 +48,13 @@ nav {
 
 body {
     background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Arial', sans-serif;
     transition: background-color 0.5s ease, color 0.3s ease;
 }
 
 .center-header {
     color: var(--header-color);
-    font-family: 'Arial', sans-serif;
     text-align: center;
     margin-top: 3%;
     font-size: 225%;
@@ -56,14 +62,53 @@ body {
 
 p {
     color: var(--text-color);
-    font-family: 'Arial', sans-serif;
     line-height: 1.6;
     margin: 20px 0;
-    text-align: center; /* delet */
 }
 
 text {
     color: var(--text-color);
-    font-family: 'Arial', sans-serif;
     line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--header-color);
+    text-align: center;
+    margin-top: 3%;
+}
+
+/* List item styling */
+li {
+    color: var(--text-color);
+    line-height: 1.6;
+    margin: 5px 0;
+}
+
+ul, ol {
+    color: var(--text-color);
+    padding-left: 40px;
+}
+
+/* Link styling */
+a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Inherit color for generic containers */
+span, div {
+    color: inherit;
+}
+
+.code-block {
+    background-color: var(--alt-bg-color);
+    color: var(--text-color);
+    padding: 10px;
+    border-radius: 5px;
+    font-family: 'Fira Code', monospace;
+    overflow-x: auto;
 }

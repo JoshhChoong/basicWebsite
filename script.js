@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Attach listener to the document to handle all clicks (event delegation)
     document.body.addEventListener('click', e => {
-        // Check if the clicked element is a link with class 'nav-link'
+        // Check for link with class 'nav-link'
         if (e.target.matches('a.nav-link')) { 
             e.preventDefault(); 
             const url = e.target.href;
