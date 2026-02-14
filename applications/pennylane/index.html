@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!--  ura applicaiton -->
+<!--  URA application -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -34,14 +34,14 @@
         </p>
         <p>
             I implemented a hybrid Quantum-Classical machine learning classifier, using a variational quantum circuit in combination with a 
-            classic linear layer. The trained hybrid-model scored 78.9% accuracy on unseen data, indicating a successful implementation and a baseline to iterate further upon.
+            classical linear layer. The trained hybrid-model scored 78.9% accuracy on unseen data, indicating a successful implementation and a baseline to iterate further upon.
             Through ablation study analysis, it was determined that the inclusion of quantum parameters in combination with a classical layer resulted in a 7% increase in accuracy
             over the exclusive latter classifier. This suggests that our gradients were successfully propagating through the quantum circuit, and that our ansatz circuit was 
             learning task-relevant features. 
             In addition, analysis of the observations in this study revealed an interesting revelation: hybrid Quantum-Classical models can make progress through otherwise 
             impassable plateaus. This is talked about more in detail in <a href="#pennyLaneSection3"> section 4 </a>
         </p>
-        <image src="./assets/UpdatedTitle.png" alt="quantum vs frozen ablation study"></image>
+        <img src="./assets/UpdatedTitle.png" alt="quantum vs frozen ablation study">
         <p>
             I learned a lot about the fascinating field of Quantum Computing, as well as how to responsibly implement experiment tracking and reproducibility through MLflow. 
             Steps for future development would include analyzing circuit design to add expressivity, and researching which datasets are especially applicable for hybrid-quantum classifiers.
@@ -55,7 +55,7 @@
                 </a>
             <li>
                 <a href = "#pennyLaneSection2">
-                    2. Quantum Circuits with Pennylane
+                    2. Quantum Circuits with PennyLane
                 </a>
             </li> 
             <li>
@@ -72,37 +72,36 @@
         
         <h2 id = "pennyLaneSection1">1. Baseline Model - Classical Logistic Regression</h2>
         <p>
-            I started by utilizing the Scikit-learn logistic regression classifier on the  
+            I started by utilizing the scikit-learn logistic regression classifier on the  
             <a href="https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic.">Wisconsin Breast Cancer Dataset</a>.
             This yielded an impressive accuracy of 96%, serving as a solid baseline for comparison.
         </p>
         Loading breast cancer dataset from scikit-learn
-        <p class = "code-block">
-            bc = load_breast_cancer() <br>
-            X = bc.data <br>
-            y = bc.target <br>
-        </p>
-        Seperating Data into training/test validation, using random seed 42
-        <p class = "code-block">
-            from sklearn.model_selection import train_test_split <br>
-            from sklearn.decomposition import PCA <br>
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42) <br>
-        </p>
+        <pre class="code-block">
+    <code>
+bc = load_breast_cancer()
+X = bc.data
+y = bc.target
+    </code>
+        </pre>
+        Separating Data into training/test validation, using random seed 42
+        <pre class="code-block"><code>from sklearn.model_selection import train_test_split
+    from sklearn.decomposition import PCA
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    </code></pre>
         Feature extraction with PCA for logistic regression
-        <p class = "code-block">
-            n_qubits = 4  <br>
-            pca = PCA(n_components=n_qubits) <br> 
-            X_train_q = pca.fit_transform(X_train) <br>
-            X_test_q = pca.transform(X_test) <br>
-        </p>
+        <pre class="code-block"><code>n_qubits = 4
+    pca = PCA(n_components=n_qubits)
+    X_train_q = pca.fit_transform(X_train)
+    X_test_q = pca.transform(X_test)
+    </code></pre>
         Applying Logistic regression model to data
-        <p class = "code-block">
-            from sklearn.linear_model import LogisticRegression <br>
-            clf = LogisticRegression(solver="lbfgs") <br>
-            clf.fit(X_train_q, y_train) <br>
-            y_pred = clf.predict(X_test_q) <br>
-            acc = accuracy_score(y_test, y_pred) <br>
-        </p>
+        <pre class="code-block"><code>from sklearn.linear_model import LogisticRegression
+    clf = LogisticRegression(solver="lbfgs")
+    clf.fit(X_train_q, y_train)
+    y_pred = clf.predict(X_test_q)
+    acc = accuracy_score(y_test, y_pred)
+    </code></pre>
         <p>
             It is worth noting that this dataset is an especially ideal application for Logistic Regression.
             With a feature set that is remarkably linearly separable, logistic regression excels at 
@@ -111,7 +110,7 @@
             provides a much-needed confidence interval.  
         </p>
 
-        <h2 id="pennyLaneSection2">2. Quantum Circuits with Pennylane</h2>
+        <h2 id="pennyLaneSection2">2. Quantum Circuits with PennyLane</h2>
         <p>
             This is where the majority of my experimentation and learning took place. 
             If you are unfamiliar with Quantum Computing, I would recommend checking out this excellent <a href="https://quantum.country/qcvc">resource</a> for an introduction.
@@ -123,57 +122,67 @@
         </p>
 
         <p>
-            Each wire begins with two single qubit rotation gates: around the x axis in the Bloch sphere, and then the y-axis. phi, the input parameter, 
-            determines the rotation angle. In this way, we are able to create a feature space, where rotation angles are weights.
+            Each wire begins with feature encoding through a single qubit rotation gates: around the x axis in the Bloch sphere, by the angle X[i], which determines the rotation angle.
+            So essentially, our input value x is encoded into a quantum state, where each input represents a rotation angle. 
         </p>
         <p>
-            Next, we create a "ladder" of CNOT gates. This allows us to create a sequence of quantum entanglement, which allows us to 
-            represent correlation between data points. 
+            We then add variational layers. For each layer, we do two steps:
+            <ol>
+                <li>
+                    First, each wire is rotated around the y axis with a trainable parameter. In this way, we are able to create a feature space, where rotation angles are weights.
+                </li>
+                <li>
+                    Next, we create a "ladder" of CNOT gates. This allows us to create a sequence of quantum entanglement, which allows us to 
+                    represent correlation between input features 
+                </li>
+            </ol>
         </p>
         <p>
-            Finally, at the end of each wire we have a measurement gate, which allows us to collapse the quantum state into classical bits. We then use the expected values of these measurements 
-            in the calculation of our loss function, which is detailed more in <a href="#pennyLaneSection3">section 3</a>.
+            Finally, at the end of each wire we have a measurement gate, which allows us to return the expected value of PauliZ on each qubit.
+            This vector can be interpreted as the quantum feature range of continuous expected values ([-1,1]), which we can then use 
+            in the calculation of our loss function. This process is detailed more in <a href="#pennyLaneSection3">section 3</a>.
         </p>
         <p>
             Use Principal Component Analysis to reduce the 30-dimensional feature set through feature extraction to 4 dimensions for the quantum classifier
         </p>
-        <p class = "code-block">
-            import pennylane as qml <br>
-            from pennylane import numpy as np <br>
-            
-            n_qubits = 4 <br>
-            pca_q = PCA(n_components=n_qubits) <br>
-            X_train_q = pca_q.fit_transform(X_train) <br>
-            X_test_q = pca_q.transform(X_test) <br>
-        </p>
+        <pre class="code-block"><code>import pennylane as qml
+    from pennylane import numpy as np
+
+    n_qubits = 4
+    pca_q = PCA(n_components=n_qubits)
+    X_train_q = pca_q.fit_transform(X_train)
+    X_test_q = pca_q.transform(X_test)
+    </code></pre>
         Applying l2 feature regularization after PCA so angles aren't absurdly large
-        <p class = "code-block">
-            scaler = StandardScaler() <br>
-            X_train_q = scaler.fit_transform(X_train_q) <br>
-            X_test_q = scaler.transform(X_test_q) <br>
+        <pre class="code-block"><code>scaler = StandardScaler()
+    X_train_q = scaler.fit_transform(X_train_q)
+    X_test_q = scaler.transform(X_test_q)
 
-            # Labels stay as {0, 1} for sigmoid/BCE <br>
-            y_train_q = y_train <br>
-            y_test_q = y_test <br>
-        </p>
+    # Labels stay as {0, 1} for sigmoid/BCE
+    y_train_q = y_train
+    y_test_q = y_test
+    </code></pre>
         Quantum device and differentiable circuit
-        <p class = "code-block">
-            dev = qml.device("lightning.qubit", wires=n_qubits) <br>
+        <pre class="code-block">
+            <code>
+dev = qml.device("lightning.qubit", wires=n_qubits)
+@qml.qnode(dev, interface="autograd")
+def qnode(x, weights):
+    # Feature encoding
+    for i in range(n_qubits):
+        qml.RX(x[i], wires=i)
 
-            @qml.qnode(dev, interface="autograd") <br>
-            def qnode(x, weights): <br>
-                # Feature encoding
-                for i in range(n_qubits): <br>
-                    qml.RX(x[i], wires=i) <br>
-                # Variational layers <br>
-                for l in range(weights.shape[0]): <br>
-                    for i in range(n_qubits): <br>
-                        qml.RY(weights[l, i], wires=i) <br>
-                    for i in range(n_qubits - 1): <br>
-                        qml.CNOT(wires=[i, i + 1]) <br>
-                # Return vector of expectation values (quantum feature vector) <br>
-                return [qml.expval(qml.PauliZ(i)) for i in range(n_qubits)] <br>
-        </p>
+    # Variational layers
+    for l in range(weights.shape[0]):
+        for i in range(n_qubits):
+            qml.RY(weights[l, i], wires=i)
+        for i in range(n_qubits - 1):
+            qml.CNOT(wires=[i, i + 1])
+
+    # Return vector of expectation values (quantum feature vector)
+    return [qml.expval(qml.PauliZ(i)) for i in range(n_qubits)]
+            </code>
+        </pre>
 
         <h2 id = "pennyLaneSection3">3. Hybrid Quantum-Classical Model</h2>
 
@@ -220,8 +229,8 @@
                 </ul>
             </p>
             <p>
-                We selected <a href="https://docs.pennylane.ai/en/stable/code/api/pennylane.AdamOptimizer.html">AdamOptimizer</a> as our optimizer to employ gradient based training for both quantum and classical paramaters.
-                While quantum natural gradients are theoretically optimal in accoradnce with the fubini-study geometry, our selection of the Adam-optimizer
+                We selected <a href="https://docs.pennylane.ai/en/stable/code/api/pennylane.AdamOptimizer.html">AdamOptimizer</a> as our optimizer to employ gradient based training for both quantum and classical parameters.
+                While quantum natural gradients are theoretically optimal in accordance with the Fubini–Study geometry, our selection of the Adam-optimizer
                 is sufficient as a "strong baseline for variational quantum algorithms" <a href="https://arxiv.org/abs/2012.09265">Cerezo et al. (2021) Variational Quantum Algorithms. arXiv. https://arxiv.org/abs/2012.09265</a>
                 An extension of this project could involve implementing natural gradients, allowing for a higher computational complexity and Quantum circuit design.
             </p>
@@ -233,38 +242,35 @@
             <p>
             For each input sample, the QNode returns a vector of expectation values:
             </p>
-            <p class="code-block">
-            # Example output from qnode <br>
-            z = qnode(x, weights)  # shape: (n_qubits,)
-            </p>
+            <pre class="code-block"><code># Example output from qnode
+z = qnode(x, weights)  # shape: (n_qubits,)
+</code></pre>
     
             <p>
             These expectation values lie in the range [-1, 1] and serve as learned quantum features.
             A classical weight vector is then applied:
             </p>
     
-            <p class="code-block">
-            def sigmoid(x): <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;return 1 / (1 + np.exp(-x)) <br><br>
-    
-            def hybrid_model(x, weights, classical_weights): <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;z = qnode(x, weights) <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;logit = np.dot(classical_weights, z) <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;return sigmoid(logit)
-            </p>
+            <pre class="code-block"><code>def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def hybrid_model(x, weights, classical_weights):
+    z = qnode(x, weights)
+    logit = np.dot(classical_weights, z)
+    return sigmoid(logit)
+</code></pre>
     
             <p>
             The model is trained using binary cross-entropy loss:
             </p>
     
-            <p class="code-block">
-            def binary_cross_entropy(y_true, y_pred): <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;eps = 1e-8 <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;return -np.mean( <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y_true * np.log(y_pred + eps) + <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(1 - y_true) * np.log(1 - y_pred + eps) <br>
-            &nbsp;&nbsp;&nbsp;&nbsp;)
-            </p>
+            <pre class="code-block"><code>def binary_cross_entropy(y_true, y_pred):
+    eps = 1e-8
+    return -np.mean(
+        y_true * np.log(y_pred + eps) +
+        (1 - y_true) * np.log(1 - y_pred + eps)
+    )
+</code></pre>
     
             <p>
             Both the quantum circuit parameters and classical weights are optimized jointly using gradient descent.
@@ -272,18 +278,18 @@
             </p>
         </div>
 
-        <h2 id = "pennyLaneSection4">4. Results</h3>
+        <h2 id = "pennyLaneSection4">4. Results</h2>
         
-        <image src = "./assets/vqcAnalysized.png" alt = "comparison of quantum vs classical weights"></image>
+        <img src = "./assets/vqcAnalysized.png" alt = "comparison of quantum vs classical weights">
         <p>
-        Interpreting these results, we can see our model sucessfully implemented a hyrbid quantum-classical classifier. It scored 82% on training data, and generalized to 78.9% on unseen data.
-        Both weights treneded towards a high L2 score, suggesting that the model was utilizng both weights equally.
-        This is exemplifed by an ablation analysis that revealed a plateau for classical weights when combined with frozen quantum weights
+        Interpreting these results, we can see our model successfully implemented a hybrid quantum-classical classifier. It scored 82% on training data, and generalized to 78.9% on unseen data.
+        Both weights trended towards a high L2 score, suggesting that the model was utilizing both weights equally.
+        This is exemplified by an ablation analysis that revealed a plateau for classical weights when combined with frozen quantum weights
         </p>
-        <image src = "./assets/GoldCropped.png" alt ="interesting correlation"></image>
+        <img src = "./assets/GoldCropped.png" alt ="interesting correlation">
         <p>
-            Intrestingly, the ablation accuracy with exclusive classical weights and frozen quantum weights plateaued at 72%. This 7% increase suggests that a 
-            hyrbid qunatum-classical ML classifier may excel in nonlinear datasets, effectively acting as a "pseudo-SVM" and revealing perhaps otherwise unoticeable data.
+            Interestingly, the ablation accuracy with exclusive classical weights and frozen quantum weights plateaued at 72%. This 7% increase suggests that a 
+            hybrid quantum-classical ML classifier may excel in nonlinear datasets, effectively acting as a "pseudo-SVM" and revealing perhaps otherwise unnoticeable data.
         </p>
 
         <p>
@@ -319,7 +325,7 @@
         <ul>
             <li>Evaluating deeper circuits</li>
             <li>Testing sensitivity to initialization and random seeds</li>
-            <li>Implementing QNG to correct for equilateral treatment of paramaters</li>
+            <li>Implementing QNG to correct for equilateral treatment of parameters</li>
             <li>Benchmarking on datasets with stronger nonlinear structure</li>
         </ul>
 
@@ -339,7 +345,7 @@
 
 
         <p>
-        All code, experiment logs, and configuration details are available in the accompanying <a href="https://github.com/JoshhChoong/PennyLaneHybridQuantumClassicClassifier">github repository</a>.
+        All code, experiment logs, and configuration details are available in the accompanying <a href="https://github.com/JoshhChoong/PennyLaneHybridQuantumClassicClassifier">GitHub repository</a>.
         </p>
     </div>
 </body>
