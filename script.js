@@ -1,4 +1,20 @@
+// Theme toggle: attach immediately (no DOMContentLoaded) so it works on home page reload.
+// Capture phase so it runs before any other handler.
+document.addEventListener('click', function themeToggleHandler(e) {
+    const toggleBtn = e.target.closest('#theme-toggle');
+    if (toggleBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const current = document.documentElement.getAttribute('data-theme');
+        const newTheme = current === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('theme', newTheme);
+        applyTheme(newTheme);
+    }
+}, true);
+
 document.addEventListener('DOMContentLoaded', () => {
+    initializeTheme();
+
     document.body.addEventListener('click', e => {
         // Check for link with class 'nav-link'
         if (e.target.matches('a.nav-link')) { 
@@ -6,14 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const url = e.target.href;
             history.pushState(null, null, url);
             loadPage(url);
-        }
-        //theme toggle 
-        const toggleBtn = e.target.closest('#theme-toggle');
-        if (toggleBtn) {
-            const current = document.documentElement.getAttribute('data-theme');
-            const newTheme = current === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('theme', newTheme);
-            applyTheme(newTheme);
         }
     });
 
@@ -60,19 +68,10 @@ function applyTheme(theme) {
         toggleThemeButton.setAttribute('aria-label', label);
     }
 }
-//Colors theme
+// Colors theme
 function initializeTheme() {
     const saved = localStorage.getItem('theme');
     const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
     const theme = saved || (prefersLight ? 'light' : 'dark');
     applyTheme(theme);
 }
-//Colors theme
-document.getElementById('theme-toggle')?.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme');
-    const newTheme = current === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('theme', newTheme);
-    applyTheme(newTheme);
-});
-//Colors theme
-initializeTheme();

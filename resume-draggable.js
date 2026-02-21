@@ -1,7 +1,6 @@
 /**
  * Makes the resume button draggable (anime.js 4).
- * Uses createScope().add(constructor) with media query: draggable on larger screens,
- * rotate animation on small screens. Re-runs when home content is injected via client-side nav.
+ * Uses createScope().add(constructor) with media query: draggable on larger screens
  */
 import { utils, animate, createScope, createDraggable } from 'https://cdn.jsdelivr.net/npm/animejs@4.0.0/+esm';
 
@@ -10,21 +9,13 @@ function initResumeScope() {
   if (!$resumeButton) return;
 
   createScope({
-    mediaQueries: { isSmall: '(max-width: 600px)' },
     defaults: { ease: 'linear' },
   })
     .add(self => {
-      if (self.matches.isSmall) {
-        animate($resumeButton, {
-          rotate: 360,
-          loop: true,
-        });
-      } else {
-        $resumeButton.classList.add('draggable');
-        createDraggable($resumeButton, {
-          container: document.querySelector('.resume-drag-container') || document.body,
-        });
-      }
+      $resumeButton.classList.add('draggable');
+      createDraggable($resumeButton, {
+        container: document.querySelector('.resume-drag-container') || document.body,
+      });
       return () => {
         $resumeButton.classList.remove('draggable');
       };

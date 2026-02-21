@@ -180,8 +180,7 @@ a:hover {
 
 .resume-button-img {
     display: block;
-    width: auto;
-    height: 4rem; /* change this to resize (e.g. 3rem smaller, 6rem larger) */
+    width: 10rem;
     object-fit: contain;
     -webkit-user-drag: none;
     user-drag: none;
@@ -189,7 +188,7 @@ a:hover {
 }
 
 .resume-button-text {
-    font-size: 2rem;
+    font-size: 1.75rem;
     color: var(--text-color);
 }
 
@@ -206,15 +205,15 @@ span, div {
     padding: 0 1rem;
 }
 
-/* Constructor block: area under h1 where resume image can be dragged (home page) */
-/* Drag area: from nav bar to bottom, full width; outlined for visualization */
+/* Drag area: from nav bar to bottom, full width; outlined for visualization.
+   top must be below nav so the theme toggle and nav links stay clickable on reload. */
 .content-with-draggable .resume-drag-container {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    border: 2px dashed var(--header-color);
+    /* border: 2px dashed var(--header-color); */
     pointer-events: none;
     z-index: 5;
 }
