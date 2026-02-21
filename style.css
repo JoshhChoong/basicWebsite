@@ -102,6 +102,16 @@ body {
     font-size: 225%;
 }
 
+.footer-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-color);
+}
+
 p {
     color: var(--text-color);
     line-height: 1.6;
@@ -146,8 +156,8 @@ a:hover {
 .resume-button-draggable-wrapper {
     position: absolute;
     left: 50%;
-    top: 1.5rem;
-    transform: translateX(-50%);
+    top: 50%;
+    transform: translate(-50%, -50%);
     width: fit-content;
     cursor: grab;
     z-index: 10;

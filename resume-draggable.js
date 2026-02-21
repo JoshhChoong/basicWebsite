@@ -2,7 +2,7 @@
  * Makes the resume button draggable (anime.js 4).
  * Uses createScope().add(constructor) with media query: draggable on larger screens
  */
-import { utils, animate, createScope, createDraggable } from 'https://cdn.jsdelivr.net/npm/animejs@4.0.0/+esm';
+import { utils, createScope, createDraggable } from 'https://cdn.jsdelivr.net/npm/animejs@4.0.0/+esm';
 
 function initResumeScope() {
   const [$resumeButton] = utils.$('.resume-button-draggable-wrapper');
@@ -15,6 +15,7 @@ function initResumeScope() {
       $resumeButton.classList.add('draggable');
       createDraggable($resumeButton, {
         container: document.querySelector('.resume-drag-container') || document.body,
+        containerFriction: 0.2
       });
       return () => {
         $resumeButton.classList.remove('draggable');
