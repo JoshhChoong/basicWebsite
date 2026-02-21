@@ -7,6 +7,7 @@
     <title>Applications</title>
     <link rel="stylesheet" href="../style.css">
     <script src="../script.js" defer></script>
+    <script src="grabJson.js" defer></script>
 </head>
 <body>
     <nav class = "header-bar">
@@ -16,11 +17,9 @@
     </nav>
     <div id="content">
         <h1 class = "center-header">Applications</h1>
-        <!-- <div class = "blog-entry">
-            <a href = "scum/" class ="nav-link">Is plant-based milk healthier?</a>
-        </div> -->
-        <div class = "blog-entry">
-            <a href = "pennylane/" class ="nav-link">Pennylane URA</a>
+
+        <div class="blog-container" id="app-list">
+            <!-- Entries filled by grabJson.js from each subdir's overview.json -->
         </div>
     </div>
 </body>

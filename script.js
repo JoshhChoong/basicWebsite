@@ -40,6 +40,11 @@ function loadPage(url) {
             document.getElementById('content').innerHTML = newContent;
             document.title = newTitle;
             document.querySelector('nav').innerHTML = newNav;
+
+            // Run app list builder when Applications page is shown via nav
+            if (typeof window.renderAppEntries === 'function' && url.includes('applications')) {
+                window.renderAppEntries();
+            }
         })
         .catch(err => console.error('Error loading page:', err));
 }

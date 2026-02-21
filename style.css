@@ -104,6 +104,21 @@ span, div {
     color: inherit;
 }
 
+/* Blog post / application page: constrain content width so text feels bigger, shrink images */
+#content {
+    max-width: 52rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 1rem;
+}
+
+#content img:not(.app-entry-header-img) {
+    max-width: 55%;
+    height: auto;
+    display: block;
+    margin: 1rem auto;
+}
+
 .code-block {
     background-color: var(--alt-bg-color);
     color: var(--text-color);
@@ -111,4 +126,87 @@ span, div {
     border-radius: 5px;
     font-family: 'Fira Code', monospace;
     overflow-x: auto;
+}
+
+.blog-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+    .blog-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.blog-entry {
+    padding: 10px;
+    background-color: var(--alt-bg-color);
+    border-radius: 5px;
+    text-align: center;
+    color: var(--text-color);
+}
+
+/* App list entries (from grabJson.js) */
+.app-entry {
+    text-align: left;
+    padding: 1rem 1.25rem;
+    min-height: 20rem;
+    display: flex;
+    align-items: stretch;
+}
+
+.app-entry .app-entry-link {
+    flex: 1;
+}
+
+.app-entry-header-img {
+    width: 100%;
+    height: 16rem;
+    object-fit: contain;
+    object-position: top;
+    background-color: var(--alt-bg-color);
+    border-radius: 4px;
+    display: block;
+}
+
+.app-entry-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.app-entry-link:hover {
+    text-decoration: none;
+}
+
+.app-entry-title {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--header-color);
+}
+
+.app-entry-meta {
+    font-size: 0.9rem;
+    color: var(--text-color);
+    opacity: 0.9;
+}
+
+.app-entry-keywords {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.25rem;
+}
+
+.app-entry-tag {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    border-radius: 4px;
 }

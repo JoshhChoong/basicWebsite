@@ -1,0 +1,8 @@
+{
+    "subpageName": "pennylane",
+    "title": "Benchmarking a Hybrid Quantum-Classical classifier with PennyLane and MLflow.",
+    "author": "Joshua Choong",
+    "date": "February 13",
+    "headerImage": "assets/1HeaderPage.png",
+    "keywords": ["Python", "Machine Learning", "Quantum", "PennyLane", "MLflow"]  
+}
