@@ -45,6 +45,8 @@ function loadPage(url) {
             if (typeof window.renderAppEntries === 'function' && url.includes('applications')) {
                 window.renderAppEntries();
             }
+            // Re-init resume draggable when home content is shown via nav
+            document.dispatchEvent(new CustomEvent('contentLoaded', { detail: { url } }));
         })
         .catch(err => console.error('Error loading page:', err));
 }

@@ -42,8 +42,50 @@
     }
 }
 
-nav {
-    text-align: right;
+.header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1.6875rem 1.25rem;
+    font-size: 1.5rem;
+    position: relative;
+    z-index: 20;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: 2.5rem;  
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-right: 2.5rem;
+}
+
+.nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+}
+
+.nav-icon:hover {
+    color: var(--link-color);
+}
+
+.nav-icon-svg {
+    width: 1em;
+    height: 1em;
+}
+
+nav .nav-link {
+    margin: 0;
 }
 
 body {
@@ -99,6 +141,58 @@ a:hover {
     text-decoration: underline;
 }
 
+/* Home page resume button (draggable wrapper)
+   Positioned inside .resume-drag-container so anime.js can drag it; container limits drag to that block. */
+.resume-button-draggable-wrapper {
+    position: absolute;
+    left: 50%;
+    top: 1.5rem;
+    transform: translateX(-50%);
+    width: fit-content;
+    cursor: grab;
+    z-index: 10;
+}
+
+.resume-button-draggable-wrapper:active {
+    cursor: grabbing;
+}
+
+.resume-button-link {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    -webkit-user-drag: none;
+    user-drag: none;
+}
+
+.resume-button-link:hover {
+    text-decoration: none;
+}
+
+.resume-button {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+}
+
+.resume-button-img {
+    display: block;
+    width: auto;
+    height: 4rem; /* change this to resize (e.g. 3rem smaller, 6rem larger) */
+    object-fit: contain;
+    -webkit-user-drag: none;
+    user-drag: none;
+    pointer-events: none;
+}
+
+.resume-button-text {
+    font-size: 2rem;
+    color: var(--text-color);
+}
+
 /* Inherit color for generic containers */
 span, div {
     color: inherit;
@@ -112,11 +206,49 @@ span, div {
     padding: 0 1rem;
 }
 
+/* Constructor block: area under h1 where resume image can be dragged (home page) */
+/* Drag area: from nav bar to bottom, full width; outlined for visualization */
+.content-with-draggable .resume-drag-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px dashed var(--header-color);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.content-with-draggable .resume-drag-container > * {
+    pointer-events: auto;
+}
+
+.blog-post-meta {
+    display: flex;
+    justify-content: space-between;
+}
+
+.blog-post-video {
+    margin: 1.5rem 0;
+}
+
+.blog-post-video iframe {
+    width: 100%;
+    max-width: 900px;
+    aspect-ratio: 16 / 9;
+    border: none;
+    border-radius: 4px;
+}
+
+.blog-post-video p {
+    margin-top: 0.5rem;
+}
+
 #content img:not(.app-entry-header-img) {
-    max-width: 55%;
+    max-width: 95%;
     height: auto;
     display: block;
-    margin: 1rem auto;
+    margin: 1rem 0;
 }
 
 .code-block {
@@ -191,6 +323,8 @@ span, div {
 }
 
 .app-entry-meta {
+    display: flex;
+    justify-content: space-between;
     font-size: 0.9rem;
     color: var(--text-color);
     opacity: 0.9;

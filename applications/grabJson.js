@@ -42,7 +42,14 @@
 
     const meta = document.createElement('div');
     meta.className = 'app-entry-meta';
-    meta.textContent = [data.author, data.date].filter(Boolean).join(' · ');
+    const authorSpan = document.createElement('span');
+    authorSpan.className = 'app-entry-author';
+    authorSpan.textContent = data.author || '';
+    const dateSpan = document.createElement('span');
+    dateSpan.className = 'app-entry-date';
+    dateSpan.textContent = data.date || '';
+    meta.appendChild(authorSpan);
+    meta.appendChild(dateSpan);
 
     const keywords = document.createElement('div');
     keywords.className = 'app-entry-keywords';
