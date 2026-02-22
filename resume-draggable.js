@@ -48,7 +48,6 @@ function isAcrobat(wrapper) {
 function isResume(wrapper) {
   return wrapper.classList.contains('draggable-icon-resume');
 }
-
 /**
  * Update the bin icon image based on how many items have been destroyed (1 → half empty, 2 → full).
  */
@@ -81,20 +80,29 @@ function runAlignedBehaviors(draggedEl, targetEl, isEnteringSnap) {
   }
   if (isResume(draggedEl) && isAcrobat(targetEl)) {
     lastSnappedTarget.set(draggedEl, targetEl);
-    if (isEnteringSnap) {
-      const href = draggedEl.getAttribute('data-resume-href');
-      if (href) {
-        // Use anchor click for better mobile compatibility
-        const link = document.createElement('a');
-        link.href = href;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    }
+    // PDF open is done in alignCenters (synchronously with touch) for mobile compatibility
+  }
+}
+
+/**
+ * Open resume PDF. Called synchronously from alignCenters so it runs in the same user-gesture
+ * stack on mobile; delayed open (e.g. after animation) is often blocked.
+ */
+function openResumePdf(resumeWrapper) {
+  const href = resumeWrapper.getAttribute('data-resume-href');
+  if (!href) return;
+  const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
+  if (isMobile) {
+    window.location.href = href;
+  } else {
+    const link = document.createElement('a');
+    link.href = href;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 }
 
@@ -104,6 +112,10 @@ function runAlignedBehaviors(draggedEl, targetEl, isEnteringSnap) {
  * isEnteringSnap: true when this snap is "resume entering Acrobat", so we open PDF only then.
  */
 function alignCenters(d, draggedEl, targetEl, container, isEnteringSnap) {
+  // Open PDF immediately (same user-gesture stack) so mobile doesn't block it
+  if (isResume(draggedEl) && isAcrobat(targetEl) && isEnteringSnap) {
+    openResumePdf(draggedEl);
+  }
   const cr = container.getBoundingClientRect();
   const dragRect = draggedEl.getBoundingClientRect();
   const targetRect = targetEl.getBoundingClientRect();

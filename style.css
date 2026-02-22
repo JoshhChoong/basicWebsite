@@ -33,13 +33,13 @@
     --link-color: var(--blue);
 }
 
-@media (prefers-color-scheme: light) {
-    :root:not([data-theme]) {
-        --bg-color: var(--base3);
-        --text-color: var(--base02);
-        --header-color: var(--base03);
-        --link-color: var(--blue);
-    }
+/* Default to light before JS runs, regardless of system preference */
+:root:not([data-theme]) {
+    --bg-color: var(--base3);
+    --alt-bg-color: var(--base2);
+    --text-color: var(--base02);
+    --header-color: var(--base03);
+    --link-color: var(--blue);
 }
 
 .header-bar {
@@ -121,6 +121,7 @@ body {
 
 .footer-slide-inner .bottom-text {
     padding: 0 0.5rem;
+    font-size: 1.4rem;
 }
 
 .footer-gap {
@@ -195,6 +196,12 @@ a:hover {
 
 .draggable-icon-bin {
     left: 70%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.draggable-icon-lightbulb {
+    left: 85%;
     top: 50%;
     transform: translate(-50%, -50%);
 }

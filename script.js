@@ -1,17 +1,3 @@
-// Theme toggle: attach immediately (no DOMContentLoaded) so it works on home page reload.
-// Capture phase so it runs before any other handler.
-document.addEventListener('click', function themeToggleHandler(e) {
-    const toggleBtn = e.target.closest('#theme-toggle');
-    if (toggleBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        const current = document.documentElement.getAttribute('data-theme');
-        const newTheme = current === 'dark' ? 'light' : 'dark';
-        localStorage.setItem('theme', newTheme);
-        applyTheme(newTheme);
-    }
-}, true);
-
 document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
 
@@ -77,19 +63,15 @@ function loadPage(url) {
         .catch(err => console.error('Error loading page:', err));
 }
 
-//Colors theme
+//Colors theme (exposed for resume-draggable lightbulb icon)
 function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    const toggleThemeButton = document.getElementById('theme-toggle');
-    if (toggleThemeButton) {
-        const label = theme === 'dark' ? 'Activate light mode' : 'Activate dark mode';
-        toggleThemeButton.setAttribute('aria-label', label);
-    }
+    localStorage.setItem('theme', theme);
 }
-// Colors theme
+window.applyTheme = applyTheme;
+// Colors theme — default to light regardless of system preference
 function initializeTheme() {
     const saved = localStorage.getItem('theme');
-    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-    const theme = saved || (prefersLight ? 'light' : 'dark');
+    const theme = saved || 'light';
     applyTheme(theme);
 }
