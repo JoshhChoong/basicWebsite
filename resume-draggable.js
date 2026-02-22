@@ -1,22 +1,19 @@
 /**
  * Makes the resume, Acrobat, and bin icons draggable (anime.js 4).
- * Magnetic snap: only snap to another icon when within SNAP_RADIUS; otherwise free movement.
+ * When close enough to another icon, animate centers into alignment. No magnetic force.
  *
  * SPA requirement: this module must be loaded globally in the base layout <head> of every
  * entry-point HTML (not inside #content). Scripts inserted via innerHTML are not executed,
  * so if this were only in the home fragment it would never run after AJAX navigation.
  * Loaded once, it listens for contentLoaded and re-inits when home content appears.
  */
-import { createScope, createDraggable } from 'https://cdn.jsdelivr.net/npm/animejs@4.0.0/+esm';
+import { createScope, createDraggable, animate } from 'https://cdn.jsdelivr.net/npm/animejs@4.0.0/+esm';
 
-const SNAP_RADIUS = 160;
-/** Below this distance we full-snap so centers align in one frame (no smoothing). */
-const SNAP_LOCK_PX = 12;
-/** Attraction per frame when inside radius. */
-const PULL_PER_FRAME = 0.11;
+const SNAP_RADIUS = 670;
+/** Below this distance we animate centers into alignment. */
+const SNAP_LOCK_PX = 42.0;
 
-let lastSnapLog = 0;
-const SNAP_LOG_THROTTLE_MS = 400;
+let isSnapping = false;
 
 /** Container-relative base position for each icon, captured once at init. */
 const basePositions = new WeakMap();
@@ -35,6 +32,45 @@ function getBasePosition(el, container) {
 
   basePositions.set(el, base);
   return base;
+}
+
+/**
+ * Animate the dragged icon so its center matches the target center.
+ * Uses DOM rects for real visual positions. Syncs draggable x/y during animation.
+ */
+function alignCenters(d, draggedEl, targetEl, container) {
+  const cr = container.getBoundingClientRect();
+  const dragRect = draggedEl.getBoundingClientRect();
+  const targetRect = targetEl.getBoundingClientRect();
+
+  const dragCenterX = dragRect.left - cr.left + dragRect.width / 2;
+  const dragCenterY = dragRect.top - cr.top + dragRect.height / 2;
+  const targetCenterX = targetRect.left - cr.left + targetRect.width / 2;
+  const targetCenterY = targetRect.top - cr.top + targetRect.height / 2;
+  const dx = targetCenterX - dragCenterX;
+  const dy = targetCenterY - dragCenterY;
+
+  d.velocityX = 0;
+  d.velocityY = 0;
+
+  const endX = d.x + dx;
+  const endY = d.y + dy;
+  const state = { x: d.x, y: d.y };
+
+  animate(state, {
+    x: endX,
+    y: endY,
+    duration: 250,
+    ease: 'out(2)',
+    onUpdate() {
+      d.setX(state.x, false);
+      d.setY(state.y, false);
+    },
+    onComplete() {
+      d.setX(endX, false);
+      d.setY(endY, false);
+    },
+  });
 }
 
 function checkSnap(draggableInstance, draggedEl, allWrappers, container, wrapperToDraggable) {
@@ -64,32 +100,10 @@ function checkSnap(draggableInstance, draggedEl, allWrappers, container, wrapper
     }
   }
 
-  if (closestTarget) {
-    const targetBase = getBasePosition(closestTarget, container);
-    const targetD = wrapperToDraggable.get(closestTarget);
-    const targetX = targetD ? targetD.x : 0;
-    const targetY = targetD ? targetD.y : 0;
-    const targetCenterX = targetBase.left + targetX + closestTarget.offsetWidth / 2;
-    const targetCenterY = targetBase.top + targetY + closestTarget.offsetHeight / 2;
-    const dx = targetCenterX - dragCenterX;
-    const dy = targetCenterY - dragCenterY;
-
-    if (closestDist < SNAP_LOCK_PX) {
-      draggableInstance.setX(targetCenterX - base.left - dragW / 2, false);
-      draggableInstance.setY(targetCenterY - base.top - dragH / 2, false);
-      draggableInstance.velocityX = 0;
-      draggableInstance.velocityY = 0;
-      return;
-    }
-
-    draggableInstance.setX(draggableInstance.x + dx * PULL_PER_FRAME, true);
-    draggableInstance.setY(draggableInstance.y + dy * PULL_PER_FRAME, true);
-
-    if (Date.now() - lastSnapLog > SNAP_LOG_THROTTLE_MS) {
-      lastSnapLog = Date.now();
-      const label = closestTarget.classList.contains('draggable-icon-adobe') ? 'Acrobat' : closestTarget.classList.contains('draggable-icon-bin') ? 'Bin' : 'Resume';
-      console.log('[Magnetic snap] Pull toward', label, '| distance:', Math.round(closestDist), 'px');
-    }
+  if (closestTarget && closestDist < SNAP_LOCK_PX && !isSnapping) {
+    isSnapping = true;
+    alignCenters(draggableInstance, draggedEl, closestTarget, container);
+    setTimeout(() => { isSnapping = false; }, 300);
   }
 }
 
