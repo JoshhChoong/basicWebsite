@@ -53,6 +53,20 @@ function loadPage(url) {
             document.title = newTitle;
             document.querySelector('nav').innerHTML = newNav;
 
+            // Show footer only on home page: add from fetched HTML or remove if not present
+            const fetchedFooter = doc.querySelector('footer.footer-bar');
+            const currentFooter = document.querySelector('footer.footer-bar');
+            if (fetchedFooter) {
+                const footerHtml = fetchedFooter.outerHTML;
+                if (currentFooter) {
+                    currentFooter.outerHTML = footerHtml;
+                } else {
+                    document.body.insertAdjacentHTML('beforeend', footerHtml);
+                }
+            } else {
+                if (currentFooter) currentFooter.remove();
+            }
+
             // Run app list builder only when the loaded content has the app list container
             if (document.querySelector('.blog-container') && typeof window.renderAppEntries === 'function') {
                 window.renderAppEntries();

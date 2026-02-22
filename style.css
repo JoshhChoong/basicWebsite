@@ -107,9 +107,15 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    text-align: center;
     padding: 1rem;
     color: var(--text-color);
+    overflow: hidden;
+}
+
+.footer-bar .bottom-text {
+    display: inline-block;
+    white-space: nowrap;
+    padding: 0 0.5rem;
 }
 
 p {
@@ -164,20 +170,21 @@ a:hover {
     cursor: grabbing;
 }
 
-.resume-button-draggable-wrapper {
-    left: 50%;
+.draggable-icon-adobe {
+    left: 10%;
     top: 50%;
     transform: translate(-50%, -50%);
 }
 
-.draggable-icon-adobe {
-    left: 65%;
+.draggable-icon-resume {
+    left: 40%;
     top: 50%;
     transform: translate(-50%, -50%);
 }
+
 
 .draggable-icon-bin {
-    left: 35%;
+    left: 70%;
     top: 50%;
     transform: translate(-50%, -50%);
 }
