@@ -151,20 +151,35 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Home page resume button (draggable wrapper)
-   Positioned inside .resume-drag-container so anime.js can drag it; container limits drag to that block. */
-.resume-button-draggable-wrapper {
+/* Home page draggable icons (resume, Acrobat, bin)
+   Positioned inside .resume-drag-container so anime.js can drag them; container limits drag to that block. */
+.draggable-icon-wrapper {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
     width: fit-content;
     cursor: grab;
     z-index: 10;
 }
 
-.resume-button-draggable-wrapper:active {
+.draggable-icon-wrapper:active {
     cursor: grabbing;
+}
+
+.resume-button-draggable-wrapper {
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.draggable-icon-adobe {
+    left: 65%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.draggable-icon-bin {
+    left: 35%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .resume-button-link {
