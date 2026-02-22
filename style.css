@@ -200,10 +200,15 @@ a:hover {
     transform: translate(-50%, -50%);
 }
 
+/* Lightbulb is draggable; .icon-behind sends it under other icons when snapped */
 .draggable-icon-lightbulb {
     left: 55%;
     top: 30%;
     transform: translate(-50%, -50%);
+}
+
+.draggable-icon-lightbulb.icon-behind {
+    z-index: 5;
 }
 
 .draggable-icon-title {
