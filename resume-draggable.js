@@ -78,9 +78,15 @@ function runAlignedBehaviors(draggedEl, targetEl, isEnteringSnap) {
     updateBinImage(targetEl);
     return;
   }
-  if (isResume(draggedEl) && isAcrobat(targetEl)) {
+  const resumeAcrobatPair =
+    (isResume(draggedEl) && isAcrobat(targetEl)) || (isAcrobat(draggedEl) && isResume(targetEl));
+  if (resumeAcrobatPair) {
     lastSnappedTarget.set(draggedEl, targetEl);
-    if (isEnteringSnap) openResumePdf(draggedEl);
+    if (isEnteringSnap) {
+      const resumeEl = document.querySelector('.draggable-icon-resume:not(.icon-vanished)');
+      if (resumeEl) openResumePdf(resumeEl);
+    }
+    return;
   }
 }
 
@@ -173,6 +179,39 @@ function checkSnap(draggableInstance, draggedEl, allWrappers, container, wrapper
     if (distance < closestDist) {
       closestDist = distance;
       closestTarget = target;
+    }
+  }
+
+  /* Prefer Resume when dragging Acrobat (and vice versa) so we don't snap to lightbulb/bin instead. */
+  if (closestTarget) {
+    const resumeEl = allWrappers.find((w) => isResume(w) && !w.classList.contains('icon-vanished'));
+    const acrobatEl = allWrappers.find((w) => isAcrobat(w) && !w.classList.contains('icon-vanished'));
+    if (isAcrobat(draggedEl) && resumeEl) {
+      const targetBase = getBasePosition(resumeEl, container);
+      const targetD = wrapperToDraggable.get(resumeEl);
+      const tx = targetD ? targetD.x : 0;
+      const ty = targetD ? targetD.y : 0;
+      const distToResume = Math.hypot(
+        targetBase.left + tx + resumeEl.offsetWidth / 2 - dragCenterX,
+        targetBase.top + ty + resumeEl.offsetHeight / 2 - dragCenterY
+      );
+      if (distToResume < SNAP_LOCK_PX) {
+        closestTarget = resumeEl;
+        closestDist = distToResume;
+      }
+    } else if (isResume(draggedEl) && acrobatEl) {
+      const targetBase = getBasePosition(acrobatEl, container);
+      const targetD = wrapperToDraggable.get(acrobatEl);
+      const tx = targetD ? targetD.x : 0;
+      const ty = targetD ? targetD.y : 0;
+      const distToAcrobat = Math.hypot(
+        targetBase.left + tx + acrobatEl.offsetWidth / 2 - dragCenterX,
+        targetBase.top + ty + acrobatEl.offsetHeight / 2 - dragCenterY
+      );
+      if (distToAcrobat < SNAP_LOCK_PX) {
+        closestTarget = acrobatEl;
+        closestDist = distToAcrobat;
+      }
     }
   }
 
