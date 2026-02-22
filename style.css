@@ -199,6 +199,23 @@ a:hover {
     transform: translate(-50%, -50%);
 }
 
+.draggable-icon-title {
+    left: 50%;
+    top: 8%;
+    transform: translate(-50%, -50%);
+}
+
+.draggable-icon-title .center-header {
+    margin-top: 0;
+}
+
+.draggable-icon-wrapper.icon-vanished {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition: opacity 0.25s ease-out;
+}
+
 .resume-button-link {
     display: block;
     text-align: center;

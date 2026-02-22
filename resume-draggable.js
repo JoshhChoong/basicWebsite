@@ -9,11 +9,14 @@
  */
 import { createScope, createDraggable, animate } from 'https://cdn.jsdelivr.net/npm/animejs@4.0.0/+esm';
 
-const SNAP_RADIUS = 670;
+const SNAP_RADIUS = 1670;
 /** Below this distance we animate centers into alignment. */
 const SNAP_LOCK_PX = 42.0;
+/** Min ms between opening the resume PDF (only when resume is thrown into Acrobat). */
+const PDF_OPEN_COOLDOWN_MS = 10000;
 
 let isSnapping = false;
+let lastPdfOpenTime = 0;
 
 /** Container-relative base position for each icon, captured once at init. */
 const basePositions = new WeakMap();
@@ -32,6 +35,38 @@ function getBasePosition(el, container) {
 
   basePositions.set(el, base);
   return base;
+}
+
+function isBin(wrapper) {
+  return wrapper.classList.contains('draggable-icon-bin');
+}
+function isAcrobat(wrapper) {
+  return wrapper.classList.contains('draggable-icon-adobe');
+}
+function isResume(wrapper) {
+  return wrapper.classList.contains('draggable-icon-resume');
+}
+
+/**
+ * When two icons have aligned: bin + anything → other vanishes; Acrobat + Resume → open PDF in new tab.
+ */
+function runAlignedBehaviors(draggedEl, targetEl) {
+  if (isBin(draggedEl)) {
+    targetEl.classList.add('icon-vanished');
+    return;
+  }
+  if (isBin(targetEl)) {
+    draggedEl.classList.add('icon-vanished');
+    return;
+  }
+  if (isResume(draggedEl) && isAcrobat(targetEl)) {
+    const now = Date.now();
+    if (now - lastPdfOpenTime >= PDF_OPEN_COOLDOWN_MS) {
+      lastPdfOpenTime = now;
+      const href = draggedEl.getAttribute('data-resume-href');
+      if (href) window.open(href, '_blank', 'noopener,noreferrer');
+    }
+  }
 }
 
 /**
@@ -69,6 +104,7 @@ function alignCenters(d, draggedEl, targetEl, container) {
     onComplete() {
       d.setX(endX, false);
       d.setY(endY, false);
+      runAlignedBehaviors(draggedEl, targetEl);
     },
   });
 }
@@ -80,11 +116,13 @@ function checkSnap(draggableInstance, draggedEl, allWrappers, container, wrapper
   const dragCenterX = base.left + draggableInstance.x + dragW / 2;
   const dragCenterY = base.top + draggableInstance.y + dragH / 2;
 
+  if (draggedEl.classList.contains('icon-vanished')) return;
+
   let closestTarget = null;
   let closestDist = SNAP_RADIUS;
 
   for (const target of allWrappers) {
-    if (target === draggedEl) continue;
+    if (target === draggedEl || target.classList.contains('icon-vanished')) continue;
     const targetBase = getBasePosition(target, container);
     const targetD = wrapperToDraggable.get(target);
     const targetX = targetD ? targetD.x : 0;
