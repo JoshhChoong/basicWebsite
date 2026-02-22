@@ -4,8 +4,8 @@
  */
 import { animate } from 'https://cdn.jsdelivr.net/npm/animejs@4.0.0/+esm';
 
-const SLIDE_DURATION_MS = 42000;
-const SLIDE_DELAY_MS = 10000; // Wait 10s before slide starts
+const SLIDE_DURATION_MS = 60000; // total texts take 60 seconds
+const SLIDE_DELAY_MS = 3000; // Wait 3s before slide starts
 const EASE = 'linear';
 
 function startFooterSlide() {

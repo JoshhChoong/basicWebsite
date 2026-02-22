@@ -17,6 +17,8 @@ const PDF_OPEN_COOLDOWN_MS = 10000;
 
 let isSnapping = false;
 let lastPdfOpenTime = 0;
+/** Number of icons destroyed by the bin (Resume + Acrobat = 2 max). */
+let binDestroyCount = 0;
 
 /** Container-relative base position for each icon, captured once at init. */
 const basePositions = new WeakMap();
@@ -48,15 +50,32 @@ function isResume(wrapper) {
 }
 
 /**
+ * Update the bin icon image based on how many items have been destroyed (1 → half empty, 2 → full).
+ */
+function updateBinImage(binWrapper) {
+  const img = binWrapper?.querySelector('.resume-button-img');
+  if (!img) return;
+  if (binDestroyCount >= 2) {
+    img.src = 'assets/binfull.png';
+  } else if (binDestroyCount >= 1) {
+    img.src = 'assets/binhalfempty.png';
+  }
+}
+
+/**
  * When two icons have aligned: bin + anything → other vanishes; Acrobat + Resume → open PDF in new tab.
  */
 function runAlignedBehaviors(draggedEl, targetEl) {
   if (isBin(draggedEl)) {
     targetEl.classList.add('icon-vanished');
+    binDestroyCount++;
+    updateBinImage(draggedEl);
     return;
   }
   if (isBin(targetEl)) {
     draggedEl.classList.add('icon-vanished');
+    binDestroyCount++;
+    updateBinImage(targetEl);
     return;
   }
   if (isResume(draggedEl) && isAcrobat(targetEl)) {
