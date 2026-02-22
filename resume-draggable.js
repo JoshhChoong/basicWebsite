@@ -80,13 +80,13 @@ function runAlignedBehaviors(draggedEl, targetEl, isEnteringSnap) {
   }
   if (isResume(draggedEl) && isAcrobat(targetEl)) {
     lastSnappedTarget.set(draggedEl, targetEl);
-    // PDF open is done in alignCenters (synchronously with touch) for mobile compatibility
+    if (isEnteringSnap) openResumePdf(draggedEl);
   }
 }
 
 /**
- * Open resume PDF. Called synchronously from alignCenters so it runs in the same user-gesture
- * stack on mobile; delayed open (e.g. after animation) is often blocked.
+ * Open resume PDF. Called from runAlignedBehaviors after the icon has animated to center.
+ * On mobile we use same-tab navigation (usually allowed after animation); on desktop we open in a new tab.
  */
 function openResumePdf(resumeWrapper) {
   const href = resumeWrapper.getAttribute('data-resume-href');
@@ -112,10 +112,6 @@ function openResumePdf(resumeWrapper) {
  * isEnteringSnap: true when this snap is "resume entering Acrobat", so we open PDF only then.
  */
 function alignCenters(d, draggedEl, targetEl, container, isEnteringSnap) {
-  // Open PDF immediately (same user-gesture stack) so mobile doesn't block it
-  if (isResume(draggedEl) && isAcrobat(targetEl) && isEnteringSnap) {
-    openResumePdf(draggedEl);
-  }
   const cr = container.getBoundingClientRect();
   const dragRect = draggedEl.getBoundingClientRect();
   const targetRect = targetEl.getBoundingClientRect();
