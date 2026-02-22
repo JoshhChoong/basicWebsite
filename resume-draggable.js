@@ -24,7 +24,7 @@ function initResumeScope() {
 }
 
 document.addEventListener('contentLoaded', (e) => {
-  const url = e.detail?.url ?? location.href;
+  const url = e.detail?.url ?? location.href;``
   const isHome = !url.includes('applications');
   if (isHome) initResumeScope();
 });
