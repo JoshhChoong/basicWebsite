@@ -10,37 +10,54 @@
 import { createScope, createDraggable } from 'https://cdn.jsdelivr.net/npm/animejs@4.0.0/+esm';
 
 const SNAP_RADIUS = 160;
-/** Below this distance we hard-snap (no drift). */
-const SNAP_LOCK_PX = 30;
-/** Fixed attraction per frame when inside radius (compounds quickly). */
-const PULL_PER_FRAME = 0.18;
+/** Below this distance we full-snap so centers align in one frame (no smoothing). */
+const SNAP_LOCK_PX = 12;
+/** Attraction per frame when inside radius. */
+const PULL_PER_FRAME = 0.11;
 
 let lastSnapLog = 0;
 const SNAP_LOG_THROTTLE_MS = 400;
 
-/** Center of a rect in container space (no cached base; avoids capture timing, resize, parent transforms). */
-function centerInContainer(rect, cr) {
-  return {
-    x: rect.left - cr.left + rect.width / 2,
-    y: rect.top - cr.top + rect.height / 2,
+/** Container-relative base position for each icon, captured once at init. */
+const basePositions = new WeakMap();
+
+function getBasePosition(el, container) {
+  let base = basePositions.get(el);
+  if (base) return base;
+
+  const cr = container.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+
+  base = {
+    left: r.left - cr.left,
+    top: r.top - cr.top,
   };
+
+  basePositions.set(el, base);
+  return base;
 }
 
-function checkSnap(draggableInstance, draggedEl, allWrappers, container) {
-  const dragRect = draggedEl.getBoundingClientRect();
-  const cr = container.getBoundingClientRect();
-  const { x: dragCenterX, y: dragCenterY } = centerInContainer(dragRect, cr);
+function checkSnap(draggableInstance, draggedEl, allWrappers, container, wrapperToDraggable) {
+  const base = getBasePosition(draggedEl, container);
+  const dragW = draggedEl.offsetWidth;
+  const dragH = draggedEl.offsetHeight;
+  const dragCenterX = base.left + draggableInstance.x + dragW / 2;
+  const dragCenterY = base.top + draggableInstance.y + dragH / 2;
 
   let closestTarget = null;
   let closestDist = SNAP_RADIUS;
 
   for (const target of allWrappers) {
     if (target === draggedEl) continue;
-    const targetRect = target.getBoundingClientRect();
-    const { x: targetCenterX, y: targetCenterY } = centerInContainer(targetRect, cr);
+    const targetBase = getBasePosition(target, container);
+    const targetD = wrapperToDraggable.get(target);
+    const targetX = targetD ? targetD.x : 0;
+    const targetY = targetD ? targetD.y : 0;
+    const targetCenterX = targetBase.left + targetX + target.offsetWidth / 2;
+    const targetCenterY = targetBase.top + targetY + target.offsetHeight / 2;
     const dx = targetCenterX - dragCenterX;
     const dy = targetCenterY - dragCenterY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    const distance = Math.hypot(dx, dy);
     if (distance < closestDist) {
       closestDist = distance;
       closestTarget = target;
@@ -48,14 +65,20 @@ function checkSnap(draggableInstance, draggedEl, allWrappers, container) {
   }
 
   if (closestTarget) {
-    const targetRect = closestTarget.getBoundingClientRect();
-    const { x: targetCenterX, y: targetCenterY } = centerInContainer(targetRect, cr);
+    const targetBase = getBasePosition(closestTarget, container);
+    const targetD = wrapperToDraggable.get(closestTarget);
+    const targetX = targetD ? targetD.x : 0;
+    const targetY = targetD ? targetD.y : 0;
+    const targetCenterX = targetBase.left + targetX + closestTarget.offsetWidth / 2;
+    const targetCenterY = targetBase.top + targetY + closestTarget.offsetHeight / 2;
     const dx = targetCenterX - dragCenterX;
     const dy = targetCenterY - dragCenterY;
 
     if (closestDist < SNAP_LOCK_PX) {
-      draggableInstance.setX(draggableInstance.x + dx, true);
-      draggableInstance.setY(draggableInstance.y + dy, true);
+      draggableInstance.setX(targetCenterX - base.left - dragW / 2, false);
+      draggableInstance.setY(targetCenterY - base.top - dragH / 2, false);
+      draggableInstance.velocityX = 0;
+      draggableInstance.velocityY = 0;
       return;
     }
 
@@ -79,6 +102,10 @@ function initResumeScope() {
   const container = document.querySelector('.resume-drag-container') || document.body;
   console.log('[Magnetic snap] Ready. Icons:', wrappers.length, '| Snap radius:', SNAP_RADIUS, 'px');
 
+  wrappers.forEach((el) => getBasePosition(el, container));
+
+  const wrapperToDraggable = new Map();
+
   createScope({
     defaults: { ease: 'linear' },
   }).add(() => {
@@ -88,9 +115,10 @@ function initResumeScope() {
       const d = createDraggable(el, {
         container,
         containerFriction: 0.35,
-        onDrag: () => checkSnap(d, el, wrappers, container),
-        onUpdate: () => checkSnap(d, el, wrappers, container),
+        onDrag: () => checkSnap(d, el, wrappers, container, wrapperToDraggable),
+        onUpdate: () => checkSnap(d, el, wrappers, container, wrapperToDraggable),
       });
+      wrapperToDraggable.set(el, d);
     });
     return () => wrappers.forEach((el) => el.classList.remove('draggable'));
   });

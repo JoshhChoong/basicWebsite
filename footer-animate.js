@@ -5,22 +5,24 @@
 import { animate } from 'https://cdn.jsdelivr.net/npm/animejs@4.0.0/+esm';
 
 const SLIDE_DURATION_MS = 42000;
+const SLIDE_DELAY_MS = 10000; // Wait 10s before slide starts
 const EASE = 'linear';
 
 function startFooterSlide() {
-    const textEl = document.querySelector('.footer-bar .bottom-text');
-    if (!textEl) return;
+    const slideEl = document.querySelector('.footer-bar .footer-slide-inner');
+    if (!slideEl) return;
 
     const vw = document.documentElement.clientWidth;
-    const textWidth = textEl.offsetWidth;
+    const textWidth = slideEl.offsetWidth;
     // Start: text's left edge at right edge of viewport (offscreen right)
     const startX = vw;
     // End: text's right edge at left edge of viewport (offscreen left)
     const endX = -(vw + textWidth);
 
-    animate(textEl, {
+    animate(slideEl, {
         translateX: [startX, endX],
         duration: SLIDE_DURATION_MS,
+        delay: SLIDE_DELAY_MS,
         ease: EASE,
         loop: true,
     });

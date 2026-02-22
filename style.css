@@ -112,10 +112,20 @@ body {
     overflow: hidden;
 }
 
-.footer-bar .bottom-text {
-    display: inline-block;
+.footer-slide-inner {
+    display: inline-flex;
+    align-items: center;
     white-space: nowrap;
+    gap: 0;
+}
+
+.footer-slide-inner .bottom-text {
     padding: 0 0.5rem;
+}
+
+.footer-gap {
+    display: inline-block;
+    min-width: 28rem;
 }
 
 p {
