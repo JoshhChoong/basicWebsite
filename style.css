@@ -223,7 +223,7 @@ span, div {
     left: 0;
     right: 0;
     bottom: 0;
-    /* border: 2px dashed var(--header-color); */
+    /* border: 8px dashed var(--header-color); */
     pointer-events: none;
     z-index: 5;
 }

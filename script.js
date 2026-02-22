@@ -16,10 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
 
     document.body.addEventListener('click', e => {
-        // Check for link with class 'nav-link'
-        if (e.target.matches('a.nav-link')) { 
-            e.preventDefault(); 
-            const url = e.target.href;
+        // Intercept nav links (and app card links, which use nav-link) so all navigation uses loadPage
+        const link = e.target.closest('a.nav-link');
+        if (link && !link.target && link.origin === location.origin) {
+            e.preventDefault();
+            const url = link.href;
             history.pushState(null, null, url);
             loadPage(url);
         }
@@ -39,18 +40,21 @@ function loadPage(url) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             
-            // Get the new content
-            const newContent = doc.getElementById('content').innerHTML;
+            // Get the new content and #content element's class (e.g. content-with-draggable on home)
+            const fetchedContent = doc.getElementById('content');
+            const newContent = fetchedContent.innerHTML;
             const newTitle = doc.title;
             const newNav = doc.querySelector('nav').innerHTML;
 
-            // Update page
-            document.getElementById('content').innerHTML = newContent;
+            // Update page (sync #content class so e.g. .content-with-draggable applies when returning to home)
+            const contentEl = document.getElementById('content');
+            contentEl.innerHTML = newContent;
+            contentEl.className = fetchedContent.className || '';
             document.title = newTitle;
             document.querySelector('nav').innerHTML = newNav;
 
-            // Run app list builder when Applications page is shown via nav
-            if (typeof window.renderAppEntries === 'function' && url.includes('applications')) {
+            // Run app list builder only when the loaded content has the app list container
+            if (document.querySelector('.blog-container') && typeof window.renderAppEntries === 'function') {
                 window.renderAppEntries();
             }
             // Re-init resume draggable when home content is shown via nav

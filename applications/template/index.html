@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<!-- list of various projects -->
+<!-- Template blog post - copy and customize for new projects -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Applications</title>
-    <link rel="stylesheet" href="../style.css">
-    <script src="../script.js" defer></script>
-    <script src="grabJson.js" defer></script>
-    <script type="module" src="../resume-draggable.js" defer></script>
+    <link rel="stylesheet" href="../../style.css">
+    <script src="../../script.js" defer></script>
+    <script src="../../applications/grabJson.js" defer></script>
+    <script type="module" src="../../resume-draggable.js" defer></script>
 </head>
 <body>
     <nav class="header-bar">
         <div class="nav-left">
-            <a href="../" class="nav-link">Home</a>
-            <a href="./" class="nav-link">Applications</a>
+            <a href="../../" class="nav-link">Home</a>
+            <a href="../" class="nav-link">Applications</a>
         </div>
         <div class="nav-right">
             <button id="theme-toggle" aria-label="Activate Dark Mode">🌓</button>
@@ -27,11 +27,42 @@
         </div>
     </nav>
     <div id="content">
-        <h1 class = "center-header">Applications</h1>
-
-        <div class="blog-container" id="app-list">
-            <!-- Entries filled by grabJson.js from each subdir's overview.json -->
+        <h1 class="center-header">Your Blog Post Title</h1>
+        <div>
+            <div class="blog-post-meta">
+                <span>Your Name</span>
+                <span>Month Day</span>
+            </div>
         </div>
+        <h2>Introduction:</h2>
+        <p>
+            Replace this with a short overview of your project. What was the goal? What did you build or learn?
+        </p>
+        <p>
+            Add another paragraph or two to expand on the introduction. Keep the same first-person tone as the other blog posts.
+        </p>
+
+        <h2>Contents:</h2>
+        <ul>
+            <li><a href="#section1">1. Section One</a></li>
+            <li><a href="#section2">2. Section Two</a></li>
+            <li><a href="#section3">3. Section Three</a></li>
+        </ul>
+
+        <h2 id="section1">1. Section One</h2>
+        <p>
+            Replace with your content. Use <code>code</code> for file names or technical terms. Use <a href="#">links</a> for references.
+        </p>
+
+        <h2 id="section2">2. Section Two</h2>
+        <p>
+            Add more sections as needed. You can include images with <code>&lt;img src="./assets/your-image.png" alt="Description"&gt;</code> (put images in an <code>assets</code> folder in this directory).
+        </p>
+
+        <h2 id="section3">3. Section Three</h2>
+        <p>
+            Wrap code blocks in <code>&lt;pre class="code-block"&gt;&lt;code&gt;...&lt;/code&gt;&lt;/pre&gt;</code> for syntax-style formatting. End with takeaways or next steps.
+        </p>
     </div>
 </body>
 </html>
