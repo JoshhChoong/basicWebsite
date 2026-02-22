@@ -12,13 +12,13 @@ import { createScope, createDraggable, animate } from 'https://cdn.jsdelivr.net/
 const SNAP_RADIUS = 1670;
 /** Below this distance we animate centers into alignment. */
 const SNAP_LOCK_PX = 42.0;
-/** Min ms between opening the resume PDF (only when resume is thrown into Acrobat). */
-const PDF_OPEN_COOLDOWN_MS = 10000;
 
 let isSnapping = false;
-let lastPdfOpenTime = 0;
 /** Number of icons destroyed by the bin (Resume + Acrobat = 2 max). */
 let binDestroyCount = 0;
+
+/** Dragged element -> target it was last snapped to. Used to open PDF only on entering Acrobat, not when dragging out. */
+const lastSnappedTarget = new WeakMap();
 
 /** Container-relative base position for each icon, captured once at init. */
 const basePositions = new WeakMap();
@@ -64,8 +64,9 @@ function updateBinImage(binWrapper) {
 
 /**
  * When two icons have aligned: bin + anything → other vanishes; Acrobat + Resume → open PDF in new tab.
+ * Only opens PDF when isEnteringSnap is true (resume came into Acrobat), not when re-snapping after dragging out.
  */
-function runAlignedBehaviors(draggedEl, targetEl) {
+function runAlignedBehaviors(draggedEl, targetEl, isEnteringSnap) {
   if (isBin(draggedEl)) {
     targetEl.classList.add('icon-vanished');
     binDestroyCount++;
@@ -79,11 +80,20 @@ function runAlignedBehaviors(draggedEl, targetEl) {
     return;
   }
   if (isResume(draggedEl) && isAcrobat(targetEl)) {
-    const now = Date.now();
-    if (now - lastPdfOpenTime >= PDF_OPEN_COOLDOWN_MS) {
-      lastPdfOpenTime = now;
+    lastSnappedTarget.set(draggedEl, targetEl);
+    if (isEnteringSnap) {
       const href = draggedEl.getAttribute('data-resume-href');
-      if (href) window.open(href, '_blank', 'noopener,noreferrer');
+      if (href) {
+        // Use anchor click for better mobile compatibility
+        const link = document.createElement('a');
+        link.href = href;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     }
   }
 }
@@ -91,8 +101,9 @@ function runAlignedBehaviors(draggedEl, targetEl) {
 /**
  * Animate the dragged icon so its center matches the target center.
  * Uses DOM rects for real visual positions. Syncs draggable x/y during animation.
+ * isEnteringSnap: true when this snap is "resume entering Acrobat", so we open PDF only then.
  */
-function alignCenters(d, draggedEl, targetEl, container) {
+function alignCenters(d, draggedEl, targetEl, container, isEnteringSnap) {
   const cr = container.getBoundingClientRect();
   const dragRect = draggedEl.getBoundingClientRect();
   const targetRect = targetEl.getBoundingClientRect();
@@ -123,7 +134,7 @@ function alignCenters(d, draggedEl, targetEl, container) {
     onComplete() {
       d.setX(endX, false);
       d.setY(endY, false);
-      runAlignedBehaviors(draggedEl, targetEl);
+      runAlignedBehaviors(draggedEl, targetEl, isEnteringSnap);
     },
   });
 }
@@ -157,9 +168,13 @@ function checkSnap(draggableInstance, draggedEl, allWrappers, container, wrapper
     }
   }
 
+  if (closestTarget && closestDist >= SNAP_LOCK_PX) {
+    lastSnappedTarget.delete(draggedEl);
+  }
   if (closestTarget && closestDist < SNAP_LOCK_PX && !isSnapping) {
+    const isEnteringSnap = lastSnappedTarget.get(draggedEl) !== closestTarget;
     isSnapping = true;
-    alignCenters(draggableInstance, draggedEl, closestTarget, container);
+    alignCenters(draggableInstance, draggedEl, closestTarget, container, isEnteringSnap);
     setTimeout(() => { isSnapping = false; }, 300);
   }
 }
