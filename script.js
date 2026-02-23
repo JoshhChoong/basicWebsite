@@ -1,3 +1,9 @@
+function initializeTheme() {
+    const saved = localStorage.getItem('theme');
+    const theme = saved || 'light';
+    applyTheme(theme);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
 
@@ -69,9 +75,4 @@ function applyTheme(theme) {
     localStorage.setItem('theme', theme);
 }
 window.applyTheme = applyTheme;
-// Colors theme — default to light regardless of system preference
-function initializeTheme() {
-    const saved = localStorage.getItem('theme');
-    const theme = saved || 'light';
-    applyTheme(theme);
-}
+// Colors theme default to light 

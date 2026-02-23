@@ -4,8 +4,7 @@
  */
 import { animate } from 'https://cdn.jsdelivr.net/npm/animejs@4.0.0/+esm';
 
-const SLIDE_DURATION_MS = 60000; // total texts take 60 seconds
-const SLIDE_DELAY_MS = 2000; // Wait 3s before slide starts
+const SLIDE_DURATION_MS = 50000; // total texts take 60 seconds
 const EASE = 'linear';
 
 function startFooterSlide() {
@@ -22,7 +21,6 @@ function startFooterSlide() {
     animate(slideEl, {
         translateX: [startX, endX],
         duration: SLIDE_DURATION_MS,
-        delay: SLIDE_DELAY_MS,
         ease: EASE,
         loop: true,
     });
