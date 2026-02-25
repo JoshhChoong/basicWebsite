@@ -1,18 +1,30 @@
 /**
  * Dynamic line between resume icon center and Adobe icon center.
  * Path is a cubic Bezier (S-curve); generated in JS, updated on drag/resize.
+ * A small dot travels along the path; position is read from the current path each frame
+ * so the dot keeps moving when the path changes (e.g. when icons are dragged).
  */
 import { animate } from 'https://cdn.jsdelivr.net/npm/animejs@4.0.0/+esm';
 
-const DRAW_DURATION = 800;
-const DRAW_EASING = 'out(2)';
+const DOT_DURATION = 2000;
+const DOT_EASING = 'linear';
 
 let pathEl = null;
+let dotGroupEl = null;
 let svgEl = null;
 let containerEl = null;
 let resumeEl = null;
 let adobeEl = null;
+let dotAnimation = null;
+let rafId = null;
+let currentDotProgress = 0;
 let initialized = false;
+
+function tick() {
+  updateArrow();
+  updateDotPosition(currentDotProgress);
+  rafId = requestAnimationFrame(tick);
+}
 
 function getCenter(el, containerRect) {
   const r = el.getBoundingClientRect();
@@ -32,10 +44,12 @@ function updateArrow() {
   if (resumeEl.classList.contains('icon-vanished') || adobeEl.classList.contains('icon-vanished')) {
     pathEl.setAttribute('d', '');
     pathEl.style.visibility = 'hidden';
+    if (dotGroupEl) dotGroupEl.style.visibility = 'hidden';
     return;
   }
 
   pathEl.style.visibility = '';
+  if (dotGroupEl) dotGroupEl.style.visibility = '';
   const { x: x1, y: y1 } = getCenter(resumeEl, rect);
   const { x: x2, y: y2 } = getCenter(adobeEl, rect);
 
@@ -47,7 +61,6 @@ function updateArrow() {
 `;
   pathEl.setAttribute('d', d.trim());
 
-  // Reset stroke dash so the line is continuous (not segmented) when path updates on drag/resize
   pathEl.style.strokeDasharray = '';
   pathEl.style.strokeDashoffset = '';
 
@@ -55,22 +68,35 @@ function updateArrow() {
   svgEl.setAttribute('preserveAspectRatio', 'none');
 }
 
-function animateArrowDraw() {
-  if (!pathEl || !pathEl.getAttribute('d')) return;
+function updateDotPosition(progress) {
+  if (!pathEl || !dotGroupEl || !pathEl.getAttribute('d')) return;
   const length = pathEl.getTotalLength();
-  pathEl.style.strokeDasharray = String(length);
-  pathEl.style.strokeDashoffset = String(length);
-  const state = { strokeDashoffset: length };
-  animate(state, {
-    strokeDashoffset: 0,
-    duration: DRAW_DURATION,
-    ease: DRAW_EASING,
+  const t = progress * length;
+  const point = pathEl.getPointAtLength(t);
+  const tangentEpsilon = Math.max(length * 0.01, 1);
+  const t2 = Math.min(t + tangentEpsilon, length);
+  const pointAhead = pathEl.getPointAtLength(t2);
+  const angleRad = Math.atan2(pointAhead.y - point.y, pointAhead.x - point.x);
+  const angleDeg = (angleRad * 180) / Math.PI;
+  dotGroupEl.setAttribute(
+    'transform',
+    `translate(${point.x}, ${point.y}) rotate(${angleDeg})`
+  );
+}
+
+function startDotAlongPath() {
+  if (!pathEl || !dotGroupEl || !pathEl.getAttribute('d')) return;
+  if (dotAnimation != null) return;
+  updateDotPosition(0);
+  const state = { progress: 0 };
+  dotAnimation = animate(state, {
+    progress: 1,
+    duration: DOT_DURATION,
+    ease: DOT_EASING,
+    loop: true,
     onUpdate() {
-      pathEl.style.strokeDashoffset = String(state.strokeDashoffset);
-    },
-    onComplete() {
-      pathEl.style.strokeDasharray = '';
-      pathEl.style.strokeDashoffset = '';
+      currentDotProgress = state.progress;
+      updateDotPosition(state.progress);
     },
   });
 }
@@ -79,24 +105,35 @@ function init() {
   containerEl = document.querySelector('.resume-drag-container');
   svgEl = document.getElementById('arrow-svg');
   pathEl = document.getElementById('arrow-path');
+  dotGroupEl = document.getElementById('arrow-dot-group');
   resumeEl = document.querySelector('.draggable-icon-resume');
   adobeEl = document.querySelector('.draggable-icon-adobe');
 
-  if (!containerEl || !svgEl || !pathEl || !resumeEl || !adobeEl) return;
+  if (!containerEl || !svgEl || !pathEl || !dotGroupEl || !resumeEl || !adobeEl) return;
   if (initialized) return;
   initialized = true;
 
   updateArrow();
-  animateArrowDraw();
+  startDotAlongPath();
   window.updateResumeAdobeArrow = updateArrow;
   window.addEventListener('resize', updateArrow);
+
+  if (rafId != null) cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(tick);
 }
 
 document.addEventListener('contentLoaded', (e) => {
-  if (!(e.detail?.url ?? location.href).includes('applications')) {
+  const url = e.detail?.url ?? location.href;
+  if (url.includes('applications')) {
+    if (rafId != null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
     initialized = false;
-    init();
+    return;
   }
+  initialized = false;
+  init();
 });
 
 document.addEventListener('DOMContentLoaded', () => {
