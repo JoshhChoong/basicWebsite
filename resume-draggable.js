@@ -70,12 +70,14 @@ function runAlignedBehaviors(draggedEl, targetEl, isEnteringSnap) {
     targetEl.classList.add('icon-vanished');
     binDestroyCount++;
     updateBinImage(draggedEl);
+    window.updateResumeAdobeArrow?.();
     return;
   }
   if (isBin(targetEl)) {
     draggedEl.classList.add('icon-vanished');
     binDestroyCount++;
     updateBinImage(targetEl);
+    window.updateResumeAdobeArrow?.();
     return;
   }
   const resumeAcrobatPair =
