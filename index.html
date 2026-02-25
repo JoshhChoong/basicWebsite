@@ -10,6 +10,7 @@
     <script src="script.js" defer></script>
     <script src="applications/grabJson.js" defer></script>
     <script type="module" src="resume-draggable.js" defer></script>
+    <script type="module" src="arrow-draw.js" defer></script>
     <script src="lightbulb-theme.js" defer></script>
     <script type="module" src="footer-animate.js" defer></script>
 </head>
@@ -30,6 +31,14 @@
     <div id="content" class="content-with-draggable">
         <h1 class="center-header">Hey! I'm Joshua Choong</h1>
         <div class="resume-drag-container">
+            <svg id="arrow-svg" class="arrow-svg" aria-hidden="true">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="currentColor" />
+                    </marker>
+                </defs>
+                <path id="arrow-path" fill="none" stroke="currentColor" stroke-width="3" marker-end="url(#arrowhead)" />
+            </svg>
             <div class="draggable-icon-wrapper draggable-icon-resume" id="resume-draggable-wrapper" data-resume-href="assets/Resume.pdf">
                 <div class="resume-button">
                     <img src="assets/pdfimage.png" alt="" class="resume-button-img" draggable="false">

@@ -248,8 +248,14 @@ function initResumeScope() {
       const d = createDraggable(el, {
         container,
         containerFriction: 0.35,
-        onDrag: () => checkSnap(d, el, wrappers, container, wrapperToDraggable),
-        onUpdate: () => checkSnap(d, el, wrappers, container, wrapperToDraggable),
+        onDrag: () => {
+          checkSnap(d, el, wrappers, container, wrapperToDraggable);
+          window.updateResumeAdobeArrow?.();
+        },
+        onUpdate: () => {
+          checkSnap(d, el, wrappers, container, wrapperToDraggable);
+          window.updateResumeAdobeArrow?.();
+        },
       });
       wrapperToDraggable.set(el, d);
     });
