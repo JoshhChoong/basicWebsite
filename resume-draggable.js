@@ -16,6 +16,10 @@ const SNAP_LOCK_PX = 42.0;
 let isSnapping = false;
 /** Number of icons destroyed by the bin (Resume + Acrobat = 2 max). */
 let binDestroyCount = 0;
+/** Map of wrapper element -> draggable instance, set during init so we can release on tab switch. */
+let activeDraggables = null;
+/** True briefly after resetDragState re-enables draggables so we don't open PDF from a spurious snap. */
+let skipNextPdfOpen = false;
 
 /** Dragged element -> target it was last snapped to. Used to open PDF only on entering Acrobat, not when dragging out. */
 const lastSnappedTarget = new WeakMap();
@@ -84,7 +88,10 @@ function runAlignedBehaviors(draggedEl, targetEl, isEnteringSnap) {
     (isResume(draggedEl) && isAcrobat(targetEl)) || (isAcrobat(draggedEl) && isResume(targetEl));
   if (resumeAcrobatPair) {
     lastSnappedTarget.set(draggedEl, targetEl);
-    if (isEnteringSnap) {
+    if (targetEl.nextSibling !== draggedEl) {
+      targetEl.insertAdjacentElement('afterend', draggedEl);
+    }
+    if (isEnteringSnap && !skipNextPdfOpen) {
       const resumeEl = document.querySelector('.draggable-icon-resume:not(.icon-vanished)');
       if (resumeEl) openResumePdf(resumeEl);
     }
@@ -261,9 +268,46 @@ function initResumeScope() {
       });
       wrapperToDraggable.set(el, d);
     });
-    return () => wrappers.forEach((el) => el.classList.remove('draggable'));
+    activeDraggables = wrapperToDraggable;
+    return () => {
+      activeDraggables = null;
+      wrappers.forEach((el) => el.classList.remove('draggable'));
+    };
   });
 }
+
+function resetDragState() {
+  document.querySelectorAll('.draggable-icon-wrapper.draggable').forEach((el) => {
+    for (let pid = 1; pid <= 10; pid++) {
+      try {
+        el.releasePointerCapture(pid);
+      } catch (_) {}
+    }
+    const opts = { bubbles: true, cancelable: true, pointerId: 1, pointerType: 'mouse', clientX: 0, clientY: 0 };
+    el.dispatchEvent(new PointerEvent('pointercancel', opts));
+    el.dispatchEvent(new PointerEvent('pointerup', opts));
+  });
+  if (activeDraggables) {
+    skipNextPdfOpen = true;
+    activeDraggables.forEach((d) => {
+      if (d) {
+        d.stop();
+        d.disable();
+      }
+    });
+    requestAnimationFrame(() => {
+      activeDraggables?.forEach((d) => d?.enable());
+      setTimeout(() => { skipNextPdfOpen = false; }, 200);
+    });
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    resetDragState();
+  }
+});
+window.addEventListener('blur', resetDragState);
 
 document.addEventListener('contentLoaded', (e) => {
   const url = e.detail?.url ?? location.href;
