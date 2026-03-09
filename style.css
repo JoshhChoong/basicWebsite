@@ -23,6 +23,7 @@
     --text-color: var(--base0);
     --header-color: var(--base1);
     --link-color: var(--blue);
+    --background-pattern: url('assets/tilingBackgrounds/paintSplatterDarkTiling.png');
 }
 
 :root[data-theme="light"] { 
@@ -31,6 +32,7 @@
     --text-color: var(--base02);
     --header-color: var(--base03);
     --link-color: var(--blue);
+    --background-pattern: url('assets/tilingBackgrounds/paintSplatterLightTiling.png');
 }
 
 /* Default to light before JS runs, regardless of system preference */
@@ -40,6 +42,7 @@
     --text-color: var(--base02);
     --header-color: var(--base03);
     --link-color: var(--blue);
+    --background-pattern: url('assets/tiledBackground/paintSplatterLightTiled.png');
 }
 
 html {
@@ -50,6 +53,7 @@ html {
 * {
     box-sizing: border-box;
 }
+
 
 .header-bar {
     display: flex;
@@ -99,6 +103,8 @@ nav .nav-link {
 
 body {
     background-color: var(--bg-color);
+    background-image: var(--background-pattern);
+    background-repeat: repeat;
     color: var(--text-color);
     font-family: 'Arial', sans-serif;
     transition: background-color 0.5s ease, color 0.3s ease;
@@ -193,34 +199,84 @@ a:hover {
     cursor: grabbing;
 }
 
+.draggable-icon-adobe,
+.draggable-icon-resume,
+.draggable-icon-bin,
+.draggable-icon-lightbulb
+{
+    width: 9vw;
+    height: 9vw;
+    box-sizing: border-box;
+}
+
+.draggable-icon-adobe .resume-button,
+.draggable-icon-resume .resume-button,
+.draggable-icon-bin .resume-button {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    min-width: 0;
+    min-height: 0;
+}
+
+.draggable-icon-adobe .resume-button-img,
+.draggable-icon-resume .resume-button-img,
+.draggable-icon-bin .resume-button-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.draggable-icon-adobe .resume-button-text,
+.draggable-icon-resume .resume-button-text,
+.draggable-icon-bin .resume-button-text {
+    font-size: min( 1.5vw);
+}
+
 .draggable-icon-adobe {
-    left: 10%;
-    top: 50%;
+    left: 30%;
+    top: 70%;
     transform: translate(-50%, -50%);
 }
 
 .draggable-icon-resume {
-    left: 40%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-}
-
-
-.draggable-icon-bin {
     left: 70%;
     top: 50%;
     transform: translate(-50%, -50%);
 }
 
-/* Lightbulb is draggable; .icon-behind sends it under other icons when snapped */
-.draggable-icon-lightbulb {
-    left: 55%;
+.draggable-icon-bin {
+    left: 10%;
     top: 30%;
+    transform: translate(-50%, -50%);
+}
+
+.draggable-icon-lightbulb {
+    left: 85%;
+    top: 10%;
     transform: translate(-50%, -50%);
 }
 
 .draggable-icon-lightbulb.icon-behind {
     z-index: 5;
+}
+
+.draggable-icon-lightbulb .resume-button {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    min-width: 0;
+    min-height: 0;
+}
+
+.draggable-icon-lightbulb .resume-button-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.draggable-icon-lightbulb .resume-button-text {
+    font-size: min(0.75rem, 2.5vw);
 }
 
 .draggable-icon-title {
@@ -246,7 +302,6 @@ a:hover {
     text-decoration: none;
     color: inherit;
     -webkit-user-drag: none;
-    user-drag: none;
 }
 
 .resume-button-link:hover {
@@ -266,7 +321,6 @@ a:hover {
     width: clamp(4rem, 22vw, 10rem);
     object-fit: contain;
     -webkit-user-drag: none;
-    user-drag: none;
     pointer-events: none;
 }
 
