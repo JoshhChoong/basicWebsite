@@ -131,33 +131,6 @@ body {
     font-size: clamp(1.5rem, 6vw + 1rem, 2.25rem);
 }
 
-.footer-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: clamp(0.5rem, 2vw, 1rem);
-    color: var(--text-color);
-    overflow: hidden;
-}
-
-.footer-slide-inner {
-    display: inline-flex;
-    align-items: center;
-    white-space: nowrap;
-    gap: 0;
-}
-
-.footer-slide-inner .bottom-text {
-    padding: 0 clamp(0.25rem, 1vw, 0.5rem);
-    font-size: clamp(0.875rem, 2.5vw + 0.5rem, 1.4rem);
-}
-
-.footer-gap {
-    display: inline-block;
-    min-width: min(28rem, 90vw);
-}
-
 p {
     color: var(--text-color);
     line-height: 1.6;
@@ -197,7 +170,7 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Home page draggable icons (resume, Acrobat, bin)
+/* Home page draggable icons (resume, Acrobat, bin, lightblub)
    Positioned inside .resume-drag-container so anime.js can drag them; container limits drag to that block. */
 .draggable-icon-wrapper {
     position: absolute;
@@ -216,8 +189,8 @@ a:hover {
 .draggable-icon-lightbulb {
     /* Keep icons the same relative size on desktop and mobile.
        Use vmin (shorter viewport side) with clamps for tap-friendly size. */
-    width: clamp(3rem, 9vmin, 6rem);
-    height: clamp(3rem, 9vmin, 6rem);
+    width: clamp(6rem, 9vmin, 8rem);
+    height: clamp(6rem, 9vmin, 8rem);
     box-sizing: border-box;
 }
 
@@ -242,9 +215,10 @@ a:hover {
 .draggable-icon-adobe .resume-button-text,
 .draggable-icon-resume .resume-button-text,
 .draggable-icon-bin .resume-button-text {
-    font-size: min( 1.5vw);
+    font-size: clamp(1rem, 0.5vw, 1.75rem);
 }
 
+/* Relative positionoing of icons*/
 .draggable-icon-adobe {
     left: 30%;
     top: 70%;
@@ -269,6 +243,7 @@ a:hover {
     transform: translate(-50%, -50%);
 }
 
+/* make lightbulb icon behind other icons when snapped*/
 .draggable-icon-lightbulb.icon-behind {
     z-index: 5;
 }
@@ -337,7 +312,7 @@ a:hover {
 }
 
 .resume-button-text {
-    font-size: clamp(0.875rem, 3vw + 0.5rem, 1.75rem);
+    font-size: clamp(1rem, 3vw + 0.5rem, 1.75rem);
     color: var(--text-color);
 }
 

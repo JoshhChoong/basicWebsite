@@ -11,7 +11,7 @@ import { createScope, createDraggable, animate } from 'https://cdn.jsdelivr.net/
 
 const SNAP_RADIUS = 1670;
 /** Below this distance we animate centers into alignment. */
-const SNAP_LOCK_PX = 62.0;
+const SNAP_LOCK_PX = 70.0;
 
 let isSnapping = false;
 /** Number of icons destroyed by the bin (Resume + Acrobat = 2 max). */
