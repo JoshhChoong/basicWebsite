@@ -1,0 +1,159 @@
+
+/* Drag area: from nav bar to bottom, full width; outlined for visualization.
+   top must be below nav so the theme toggle and nav links stay clickable on reload. */
+   .content-with-draggable .resume-drag-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* border: 8px dashed var(--header-color); */
+    pointer-events: none;
+    z-index: 30;
+}
+
+.content-with-draggable .resume-drag-container > * {
+    pointer-events: auto;
+}
+
+.content-with-draggable .arrow-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+    color: var(--text-color);
+}
+
+.content-with-draggable .arrow-svg ~ .draggable-icon-wrapper {
+    z-index: 10;
+}
+/* Blog post / application page: constrain content width so text feels bigger, shrink images */
+#content {
+    max-width: min(52rem, 100%);
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 clamp(0.75rem, 5vw, 1.5rem);
+}
+/* Blog post styling */
+.blog-post-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.blog-post-video {
+    margin: 1.5rem 0;
+}
+
+.blog-post-video iframe {
+    width: 100%;
+    max-width: min(900px, 100%);
+    aspect-ratio: 16 / 9;
+    border: none;
+    border-radius: 4px;
+}
+
+.blog-post-video p {
+    margin-top: 0.5rem;
+}
+
+#content img:not(.app-entry-header-img) {
+    max-width: min(95%, 100%);
+    height: auto;
+    display: block;
+    margin: clamp(0.5rem, 2vw, 1rem) 0;
+}
+
+.code-block {
+    background-color: var(--alt-bg-color);
+    color: var(--text-color);
+    padding: clamp(0.5rem, 2vw, 0.625rem);
+    border-radius: 5px;
+    font-family: 'Fira Code', monospace;
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.blog-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+    gap: clamp(0.5rem, 2vw, 1rem);
+    margin-top: clamp(0.75rem, 3vw, 1.25rem);
+}
+
+.blog-entry {
+    padding: clamp(0.5rem, 2vw, 0.625rem);
+    background-color: var(--alt-bg-color);
+    border-radius: 5px;
+    text-align: center;
+    color: var(--text-color);
+}
+
+/* App list entries (from grabJson.js) */
+.app-entry {
+    text-align: left;
+    padding: clamp(0.75rem, 3vw, 1rem) clamp(0.75rem, 3vw, 1.25rem);
+    min-height: clamp(12rem, 45vw, 20rem);
+    display: flex;
+    align-items: stretch;
+}
+
+.app-entry .app-entry-link {
+    flex: 1;
+}
+
+.app-entry-header-img {
+    width: 100%;
+    height: clamp(10rem, 35vw, 16rem);
+    object-fit: contain;
+    object-position: top;
+    background-color: var(--alt-bg-color);
+    border-radius: 4px;
+    display: block;
+}
+
+.app-entry-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.app-entry-link:hover {
+    text-decoration: none;
+}
+
+.app-entry-title {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--header-color);
+}
+
+.app-entry-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem;
+    font-size: clamp(0.8rem, 2vw + 0.4rem, 0.9rem);
+    color: var(--text-color);
+    opacity: 0.9;
+}
+
+.app-entry-keywords {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.25rem;
+}
+
+.app-entry-tag {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    border-radius: 4px;
+}
