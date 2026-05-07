@@ -23,8 +23,8 @@ let binDestroyCount = 0;
 let activeDraggables = null;
 /** True briefly after resetDragState re-enables draggables so we don't open PDF from a spurious snap. */
 let skipNextPdfOpen = false;
-/** Cleanup function for the one-time intro overlay mousemove listener. */
-let introMouseMoveCleanup = null;
+/** Cleanup function for the one-time intro reveal trigger listener(s). */
+let introRevealCleanup = null;
 
 /** Dragged element -> target it was last snapped to. Used to open PDF only on entering Acrobat, not when dragging out. */
 const lastSnappedTarget = new WeakMap();
@@ -278,13 +278,13 @@ function initIntroOverlay() {
     return;
   }
 
-  introMouseMoveCleanup?.();
+  introRevealCleanup?.();
   setDeferredIntroIconsVisible(false);
   overlay.classList.remove('is-revealing', 'is-hidden');
   overlay.dataset.revealed = 'false';
   overlay.setAttribute('aria-hidden', 'false');
 
-  const onFirstMove = () => {
+  const revealIntro = () => {
     if (overlay.dataset.revealed === 'true') return;
     overlay.dataset.revealed = 'true';
     overlay.classList.add('is-revealing');
@@ -300,8 +300,17 @@ function initIntroOverlay() {
     }, INTRO_REVEAL_MS);
   };
 
-  window.addEventListener('mousemove', onFirstMove, { once: true, passive: true });
-  introMouseMoveCleanup = () => window.removeEventListener('mousemove', onFirstMove);
+  const resumeTrigger = document.querySelector('.draggable-icon-resume');
+  if (!resumeTrigger) return;
+
+  const onResumeInteract = () => revealIntro();
+  resumeTrigger.addEventListener('pointerdown', onResumeInteract, { once: true, capture: true });
+  resumeTrigger.addEventListener('click', onResumeInteract, { once: true, capture: true });
+
+  introRevealCleanup = () => {
+    resumeTrigger.removeEventListener('pointerdown', onResumeInteract, { capture: true });
+    resumeTrigger.removeEventListener('click', onResumeInteract, { capture: true });
+  };
 }
 
 function initResumeScope() {
@@ -386,7 +395,7 @@ document.addEventListener('contentLoaded', (e) => {
     initIntroOverlay();
     initResumeScope();
   } else {
-    introMouseMoveCleanup?.();
+    introRevealCleanup?.();
   }
 });
 
