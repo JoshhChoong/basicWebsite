@@ -249,8 +249,7 @@ a:hover {
     z-index: 10;
 }
 
-.intro-active .draggable-icon-bin,
-.intro-active .draggable-icon-lightbulb {
+.intro-hidden-until-reveal {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;

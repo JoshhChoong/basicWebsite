@@ -14,6 +14,7 @@ const SNAP_RADIUS = 1670;
 const SNAP_LOCK_PX = 70.0;
 const INTRO_REVEAL_MS = 900;
 const INTRO_FADE_MS = 220;
+const INTRO_DEFERRED_ICON_SELECTOR = '.draggable-icon-bin, .draggable-icon-lightbulb';
 
 let isSnapping = false;
 /** Number of icons destroyed by the bin (Resume + Acrobat = 2 max). */
@@ -30,6 +31,16 @@ const lastSnappedTarget = new WeakMap();
 
 /** Container-relative base position for each icon, captured once at init. */
 const basePositions = new WeakMap();
+
+function setDeferredIntroIconsVisible(visible) {
+  document.querySelectorAll(INTRO_DEFERRED_ICON_SELECTOR).forEach((el) => {
+    if (visible) {
+      el.classList.remove('intro-hidden-until-reveal');
+    } else {
+      el.classList.add('intro-hidden-until-reveal');
+    }
+  });
+}
 
 function getBasePosition(el, container) {
   let base = basePositions.get(el);
@@ -242,12 +253,12 @@ function checkSnap(draggableInstance, draggedEl, allWrappers, container, wrapper
 function initIntroOverlay() {
   const overlay = document.getElementById('intro-overlay');
   if (!overlay) {
-    document.body.classList.remove('intro-active');
+    setDeferredIntroIconsVisible(true);
     return;
   }
 
   introMouseMoveCleanup?.();
-  document.body.classList.add('intro-active');
+  setDeferredIntroIconsVisible(false);
   overlay.classList.remove('is-revealing', 'is-hidden');
   overlay.dataset.revealed = 'false';
   overlay.setAttribute('aria-hidden', 'false');
@@ -262,7 +273,7 @@ function initIntroOverlay() {
       overlay.setAttribute('aria-hidden', 'true');
       window.setTimeout(() => {
         overlay.remove();
-        document.body.classList.remove('intro-active');
+        setDeferredIntroIconsVisible(true);
       }, INTRO_FADE_MS + 30);
     }, INTRO_REVEAL_MS);
   };
