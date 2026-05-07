@@ -12,7 +12,7 @@ import { createScope, createDraggable, animate } from 'https://cdn.jsdelivr.net/
 const SNAP_RADIUS = 1670;
 /** Below this distance we animate centers into alignment. */
 const SNAP_LOCK_PX = 70.0;
-const INTRO_REVEAL_MS = 1500;
+const INTRO_REVEAL_MS = 1000;
 const INTRO_FADE_MS = 220;
 const INTRO_DEFERRED_ICON_SELECTOR = '.draggable-icon-bin, .draggable-icon-lightbulb';
 
