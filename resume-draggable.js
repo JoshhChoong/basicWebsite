@@ -12,6 +12,8 @@ import { createScope, createDraggable, animate } from 'https://cdn.jsdelivr.net/
 const SNAP_RADIUS = 1670;
 /** Below this distance we animate centers into alignment. */
 const SNAP_LOCK_PX = 70.0;
+const INTRO_REVEAL_MS = 900;
+const INTRO_FADE_MS = 220;
 
 let isSnapping = false;
 /** Number of icons destroyed by the bin (Resume + Acrobat = 2 max). */
@@ -20,6 +22,8 @@ let binDestroyCount = 0;
 let activeDraggables = null;
 /** True briefly after resetDragState re-enables draggables so we don't open PDF from a spurious snap. */
 let skipNextPdfOpen = false;
+/** Cleanup function for the one-time intro overlay mousemove listener. */
+let introMouseMoveCleanup = null;
 
 /** Dragged element -> target it was last snapped to. Used to open PDF only on entering Acrobat, not when dragging out. */
 const lastSnappedTarget = new WeakMap();
@@ -235,6 +239,38 @@ function checkSnap(draggableInstance, draggedEl, allWrappers, container, wrapper
   }
 }
 
+function initIntroOverlay() {
+  const overlay = document.getElementById('intro-overlay');
+  if (!overlay) {
+    document.body.classList.remove('intro-active');
+    return;
+  }
+
+  introMouseMoveCleanup?.();
+  document.body.classList.add('intro-active');
+  overlay.classList.remove('is-revealing', 'is-hidden');
+  overlay.dataset.revealed = 'false';
+  overlay.setAttribute('aria-hidden', 'false');
+
+  const onFirstMove = () => {
+    if (overlay.dataset.revealed === 'true') return;
+    overlay.dataset.revealed = 'true';
+    overlay.classList.add('is-revealing');
+
+    window.setTimeout(() => {
+      overlay.classList.add('is-hidden');
+      overlay.setAttribute('aria-hidden', 'true');
+      window.setTimeout(() => {
+        overlay.remove();
+        document.body.classList.remove('intro-active');
+      }, INTRO_FADE_MS + 30);
+    }, INTRO_REVEAL_MS);
+  };
+
+  window.addEventListener('mousemove', onFirstMove, { once: true, passive: true });
+  introMouseMoveCleanup = () => window.removeEventListener('mousemove', onFirstMove);
+}
+
 function initResumeScope() {
   if (document.querySelector('.draggable-icon-wrapper[data-initialized]')) return;
 
@@ -314,11 +350,15 @@ document.addEventListener('contentLoaded', (e) => {
   const isHome = !url.includes('applications');
 
   if (isHome) {
+    initIntroOverlay();
     initResumeScope();
+  } else {
+    introMouseMoveCleanup?.();
   }
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  initIntroOverlay();
   if (document.querySelector('.draggable-icon-wrapper')) {
     initResumeScope();
   }

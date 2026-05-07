@@ -35,7 +35,7 @@
     --background-pattern: url('assets/tilingBackgrounds/paintSplatterLightTiling.png');
 }
 
-/* Default to light before JS runs, regardless of system preference */
+/* Default to light before JS runs, regardless of system preference, so lightbulb mechanic makes sense */
 :root:not([data-theme]) {
     --bg-color: var(--base3);
     --alt-bg-color: var(--base2);
@@ -124,6 +124,71 @@ body {
     padding-bottom: clamp(3rem, 12vw, 4rem);
 }
 
+.intro-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.intro-dark-backdrop {
+    position: absolute;
+    inset: 0;
+    background-color: var(--base03);
+    z-index: 0;
+}
+
+.intro-circle-layer {
+    position: absolute;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+}
+
+.intro-circle-layer circle {
+    transform-origin: center;
+    transform-box: fill-box;
+    transition: transform 1500ms ease;
+}
+
+.intro-circle-light circle {
+    fill: var(--base3);
+    transform: scale(0.01);
+}
+
+.intro-hint {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    width: min(90vw, 50rem);
+    text-align: center;
+    color: var(--base2);
+    font-size: clamp(1.4rem, 3vw + 0.8rem, 2.75rem);
+    font-family: "Comic Sans MS", "Bradley Hand", cursive, sans-serif;
+    text-shadow: 0 0 12px rgba(0, 0, 0, 0.45);
+    transition: opacity 450ms ease;
+    z-index: 2;
+}
+
+.intro-overlay.is-revealing .intro-circle-light circle {
+    transform: scale(1.45);
+}
+
+.intro-overlay.is-revealing .intro-hint {
+    opacity: 0;
+}
+
+.intro-overlay.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 220ms ease, visibility 0ms linear 220ms;
+}
+
 .center-header {
     color: var(--header-color);
     text-align: center;
@@ -176,7 +241,28 @@ a:hover {
     position: absolute;
     width: fit-content;
     cursor: grab;
-    z-index: 30;
+    z-index: 15;
+}
+
+#arrow-svg {
+    position: relative;
+    z-index: 10;
+}
+
+.intro-active .draggable-icon-bin,
+.intro-active .draggable-icon-lightbulb {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.draggable-icon-resume,
+.draggable-icon-adobe {
+    z-index: 60;
+}
+
+.resume-drag-container {
+    position: relative;
 }
 
 .draggable-icon-wrapper:active {
@@ -315,7 +401,6 @@ a:hover {
     font-size: clamp(1rem, 3vw + 0.5rem, 1.75rem);
     color: var(--text-color);
 }
-
 /* Inherit color for generic containers */
 span, div {
     color: inherit;
