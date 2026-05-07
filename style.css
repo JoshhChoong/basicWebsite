@@ -45,6 +45,26 @@
     --background-pattern: url('assets/tiledBackground/paintSplatterLightTiled.png');
 }
 
+:root {
+    --intro-blob-start-width-vw: 100; /* change this */
+    --intro-blob-start-scale: calc(var(--intro-blob-start-width-vw) / 5);
+}
+
+#intro-blob {
+    transform: translate(0%, 10%) scale(0.72);
+    fill: var(--base3);
+    transform-origin: center;
+    transform-box: fill-box;
+    transition: transform 1000ms linear;
+  }
+  .intro-overlay.is-revealing #intro-blob {
+    transform: translate(0%, 10%) scale(2.1);
+  }
+  .intro-ripple {
+    left: 50%;
+    top: 70%;
+  }
+
 html {
     font-size: clamp(0.9375rem, 2.5vw + 0.5rem, 1rem);
     -webkit-text-size-adjust: 100%;
@@ -139,7 +159,7 @@ body {
     z-index: 0;
 }
 
-.intro-circle-layer {
+.intro-blob-layer {
     position: absolute;
     inset: 0;
     width: 100vw;
@@ -147,15 +167,24 @@ body {
     z-index: 1;
 }
 
-.intro-circle-layer circle {
-    transform-origin: center;
-    transform-box: fill-box;
-    transition: transform 1500ms ease;
-}
+/* #intro-blob {
 
-.intro-circle-light circle {
-    fill: var(--base3);
-    transform: scale(0.01);
+    transform: translate(-12%, 1%) scale(0.025);
+    transition: transform 1500ms cubic-bezier(0.2, 0.9, 0.2, 1);
+} */
+
+.intro-ripple {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 9vmin;
+    height: 9vmin;
+    border: 2px solid rgba(238, 232, 213, 0.65);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0.15);
+    opacity: 0;
+    transition: transform 1000ms linear, opacity 1000ms linear;
+    z-index: 1;
 }
 
 .intro-hint {
@@ -174,8 +203,13 @@ body {
     z-index: 2;
 }
 
-.intro-overlay.is-revealing .intro-circle-light circle {
-    transform: scale(1.45);
+.intro-overlay.is-revealing #intro-blob {
+    transform: translate(0%, 10%) scale(2.1);
+}
+
+.intro-overlay.is-revealing .intro-ripple {
+    transform: translate(-50%, -50%) scale(7.2);
+    opacity: 1;
 }
 
 .intro-overlay.is-revealing .intro-hint {
@@ -306,13 +340,13 @@ a:hover {
 /* Relative positionoing of icons*/
 .draggable-icon-adobe {
     left: 30%;
-    top: 70%;
+    top: 60%;
     transform: translate(-50%, -50%);
 }
 
 .draggable-icon-resume {
-    left: 70%;
-    top: 50%;
+    left: 65%;
+    top: 45%;
     transform: translate(-50%, -50%);
 }
 

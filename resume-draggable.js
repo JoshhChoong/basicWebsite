@@ -12,7 +12,7 @@ import { createScope, createDraggable, animate } from 'https://cdn.jsdelivr.net/
 const SNAP_RADIUS = 1670;
 /** Below this distance we animate centers into alignment. */
 const SNAP_LOCK_PX = 70.0;
-const INTRO_REVEAL_MS = 900;
+const INTRO_REVEAL_MS = 1500;
 const INTRO_FADE_MS = 220;
 const INTRO_DEFERRED_ICON_SELECTOR = '.draggable-icon-bin, .draggable-icon-lightbulb';
 
@@ -39,6 +39,27 @@ function setDeferredIntroIconsVisible(visible) {
     } else {
       el.classList.add('intro-hidden-until-reveal');
     }
+  });
+}
+
+function animateIntroDistortion(overlay) {
+  const turbulenceEl = overlay.querySelector('#intro-turbulence');
+  const displacementEl = overlay.querySelector('#intro-displacement');
+  if (!turbulenceEl || !displacementEl) return;
+
+  const distortion = { baseFrequency: 0.05, scale: 15 };
+  animate(distortion, {
+    baseFrequency: 0.008,
+    scale: 15,
+    duration: INTRO_REVEAL_MS,
+    ease: 'out(2)',
+    loop: false,
+    alternate: false,
+    onUpdate: () => {
+      const freq = Math.max(0.001, distortion.baseFrequency);
+      turbulenceEl.setAttribute('baseFrequency', `${freq}`);
+      displacementEl.setAttribute('scale', `${Math.max(0, distortion.scale)}`);
+    },
   });
 }
 
@@ -267,6 +288,7 @@ function initIntroOverlay() {
     if (overlay.dataset.revealed === 'true') return;
     overlay.dataset.revealed = 'true';
     overlay.classList.add('is-revealing');
+    animateIntroDistortion(overlay);
 
     window.setTimeout(() => {
       overlay.classList.add('is-hidden');

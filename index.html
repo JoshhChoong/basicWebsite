@@ -18,9 +18,20 @@
 <body>
     <div id="intro-overlay" class="intro-overlay" aria-hidden="false">
         <div class="intro-dark-backdrop" aria-hidden="true"></div>
-        <svg class="intro-circle-layer intro-circle-light" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            <circle cx="50" cy="50" r="50"></circle>
+        <svg class="intro-blob-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+                <filter id="intro-blob-filter" x="-40%" y="-40%" width="180%" height="180%">
+                    <feTurbulence id="intro-turbulence" type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="7" result="noise"></feTurbulence>
+                    <feDisplacementMap id="intro-displacement" in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+                </filter>
+            </defs>
+            <path
+                id="intro-blob"
+                filter="url(#intro-blob-filter)"
+                d="M50 10 C80 10 90 40 90 50 C90 80 70 90 50 90 C20 90 10 70 10 50 C10 20 30 10 50 10"
+            ></path>
         </svg>
+        <div class="intro-ripple" aria-hidden="true"></div>
         <p class="intro-hint">Try dragging the resume into acrobat!</p>
     </div>
     <nav class="header-bar">
