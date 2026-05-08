@@ -181,7 +181,7 @@ body {
     font-size: clamp(1.4rem, 2vw + 0.8rem, 2.75rem);
     font-family: "Comic Sans MS", "Bradley Hand", cursive, sans-serif;
     text-shadow: 0 0 12px rgba(0, 0, 0, 0.45);
-    transition: opacity 450ms ease;
+    transition: opacity 1000ms ease;
     z-index: 2;
 }
 
