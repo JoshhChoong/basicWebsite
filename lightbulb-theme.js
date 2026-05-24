@@ -48,9 +48,9 @@
       return;
     }
     if (lightbulb.classList.contains('icon-vanished')) {
-      if (lastAnyOn !== false) {
-        lastAnyOn = false;
-        if (typeof window.applyTheme === 'function') window.applyTheme('light');
+      if (lastAnyOn !== 'vanished') {
+        lastAnyOn = 'vanished';
+        if (typeof window.applyTheme === 'function') window.applyTheme('dark');
       }
       requestAnimationFrame(tick);
       return;
