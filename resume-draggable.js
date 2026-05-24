@@ -19,6 +19,7 @@ const INTRO_DEFERRED_ICON_SELECTOR = '.draggable-icon-bin, .draggable-icon-light
 let isSnapping = false;
 /** Number of icons destroyed by the bin (Resume + Acrobat = 2 max). */
 let binDestroyCount = 0;
+let resumeRegenCount = 0;
 /** Map of wrapper element -> draggable instance, set during init so we can release on tab switch. */
 let activeDraggables = null;
 /** True briefly after resetDragState re-enables draggables so we don't open PDF from a spurious snap. */
@@ -101,6 +102,52 @@ function updateBinImage(binWrapper) {
   }
 }
 
+function regenerateResume(resumeEl) {
+  if (!activeDraggables) return;
+  const d = activeDraggables.get(resumeEl);
+  if (!d) return;
+
+  const container = document.querySelector('.resume-drag-container') || document.body;
+  const containerRect = container.getBoundingClientRect();
+  
+  let width = containerRect.width;
+  let height = containerRect.height;
+  if (width === 0) width = window.innerWidth;
+  if (height === 0) height = window.innerHeight;
+
+  const elWidth = resumeEl.offsetWidth || 100;
+  const elHeight = resumeEl.offsetHeight || 100;
+
+  const nav = document.querySelector('.header-bar');
+  const navHeight = nav ? nav.getBoundingClientRect().height : 80;
+  const margin = 20;
+  const minTop = navHeight + margin;
+  
+  const maxW = Math.max(0, width - elWidth - margin * 2);
+  const maxH = Math.max(minTop, height - elHeight - margin * 2);
+
+  const randomLeft = margin + Math.random() * maxW;
+  const randomTop = minTop + Math.random() * (maxH - minTop);
+
+  const base = getBasePosition(resumeEl, container);
+
+  const newX = randomLeft - base.left;
+  const newY = randomTop - base.top;
+
+  d.setX(newX, false);
+  d.setY(newY, false);
+
+  // Increment counter and update text
+  resumeRegenCount++;
+  const textEl = resumeEl.querySelector('.resume-button-text');
+  if (textEl) {
+    textEl.textContent = `resume (${resumeRegenCount})`;
+  }
+
+  resumeEl.classList.remove('icon-vanished');
+  window.updateResumeAdobeArrow?.();
+}
+
 /**
  * When two icons have aligned: bin + anything → other vanishes; Acrobat + Resume → open PDF in new tab.
  * Only opens PDF when isEnteringSnap is true (resume came into Acrobat), not when re-snapping after dragging out.
@@ -111,6 +158,18 @@ function runAlignedBehaviors(draggedEl, targetEl, isEnteringSnap) {
     binDestroyCount++;
     updateBinImage(draggedEl);
     window.updateResumeAdobeArrow?.();
+    if (isResume(targetEl)) {
+      for (let pid = 1; pid <= 10; pid++) {
+        try { targetEl.releasePointerCapture(pid); } catch (_) {}
+      }
+      const targetD = activeDraggables?.get(targetEl);
+      if (targetD) {
+        targetD.stop();
+        targetD.disable();
+        targetD.enable();
+      }
+      setTimeout(() => regenerateResume(targetEl), 500);
+    }
     return;
   }
   if (isBin(targetEl)) {
@@ -118,6 +177,18 @@ function runAlignedBehaviors(draggedEl, targetEl, isEnteringSnap) {
     binDestroyCount++;
     updateBinImage(targetEl);
     window.updateResumeAdobeArrow?.();
+    if (isResume(draggedEl)) {
+      for (let pid = 1; pid <= 10; pid++) {
+        try { draggedEl.releasePointerCapture(pid); } catch (_) {}
+      }
+      const dragD = activeDraggables?.get(draggedEl);
+      if (dragD) {
+        dragD.stop();
+        dragD.disable();
+        dragD.enable();
+      }
+      setTimeout(() => regenerateResume(draggedEl), 500);
+    }
     return;
   }
   const resumeAcrobatPair =
@@ -315,6 +386,8 @@ function initIntroOverlay() {
 
 function initResumeScope() {
   if (document.querySelector('.draggable-icon-wrapper[data-initialized]')) return;
+
+  resumeRegenCount = 0;
 
   const wrappers = Array.from(document.querySelectorAll('.draggable-icon-wrapper'));
   if (!wrappers.length) return;
