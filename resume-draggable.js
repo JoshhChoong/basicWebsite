@@ -44,24 +44,8 @@ function setDeferredIntroIconsVisible(visible) {
 }
 
 function animateIntroDistortion(overlay) {
-  const turbulenceEl = overlay.querySelector('#intro-turbulence');
-  const displacementEl = overlay.querySelector('#intro-displacement');
-  if (!turbulenceEl || !displacementEl) return;
-
-  const distortion = { baseFrequency: 0.05, scale: 15 };
-  animate(distortion, {
-    baseFrequency: 0.008,
-    scale: 15,
-    duration: INTRO_REVEAL_MS,
-    ease: 'out(2)',
-    loop: false,
-    alternate: false,
-    onUpdate: () => {
-      const freq = Math.max(0.001, distortion.baseFrequency);
-      turbulenceEl.setAttribute('baseFrequency', `${freq}`);
-      displacementEl.setAttribute('scale', `${Math.max(0, distortion.scale)}`);
-    },
-  });
+  // SVG filter animation removed to eliminate CPU-bound recalculation and lagginess.
+  // CSS transform transition on #intro-blob is fully GPU-accelerated and handles the animation smoothly.
 }
 
 function getBasePosition(el, container) {
