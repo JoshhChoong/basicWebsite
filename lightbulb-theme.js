@@ -41,12 +41,15 @@
 
   let lastAnyOn = null;
 
+  let ticking = false;
+
   function tick() {
     const lightbulb = document.querySelector('.draggable-icon-lightbulb');
     if (!lightbulb) {
-      requestAnimationFrame(tick);
+      ticking = false;
       return;
     }
+    ticking = true;
     if (lightbulb.classList.contains('icon-vanished')) {
       if (lastAnyOn !== 'vanished') {
         lastAnyOn = 'vanished';
@@ -74,12 +77,12 @@
   }
 
   function startWhenReady() {
+    if (ticking) return;
     if (document.querySelector('.draggable-icon-lightbulb')) {
       tick();
-      return;
     }
-    requestAnimationFrame(startWhenReady);
   }
 
   document.addEventListener('DOMContentLoaded', startWhenReady);
+  document.addEventListener('contentLoaded', startWhenReady);
 })();

@@ -2,6 +2,45 @@ function initializeTheme() {
     applyTheme('light');
 }
 
+function pageBaseUrl(url) {
+    const u = new URL(url, location.href);
+    const last = u.pathname.split('/').pop();
+    if (last && !last.includes('.') && !u.pathname.endsWith('/')) {
+        u.pathname += '/';
+    }
+    return u;
+}
+
+function absolutizeRoot(root, pageUrl) {
+    if (!root) return;
+    const base = pageBaseUrl(pageUrl);
+    root.querySelectorAll('[src], [href], [data-resume-href]').forEach((el) => {
+        ['src', 'href', 'data-resume-href'].forEach((attr) => {
+            if (!el.hasAttribute(attr)) return;
+            const value = el.getAttribute(attr);
+            if (!value || /^(https?:|data:|blob:|mailto:|javascript:|#)/i.test(value)) return;
+            el.setAttribute(attr, new URL(value, base).href);
+        });
+    });
+}
+
+function syncIntroOverlay(doc) {
+    const fetchedOverlay = doc.getElementById('intro-overlay');
+    const currentOverlay = document.getElementById('intro-overlay');
+    if (fetchedOverlay) {
+        const overlayHtml = fetchedOverlay.outerHTML;
+        if (currentOverlay) {
+            currentOverlay.outerHTML = overlayHtml;
+        } else {
+            const nav = document.querySelector('nav');
+            if (nav) nav.insertAdjacentHTML('beforebegin', overlayHtml);
+            else document.body.insertAdjacentHTML('afterbegin', overlayHtml);
+        }
+    } else if (currentOverlay) {
+        currentOverlay.remove();
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
 
@@ -32,6 +71,8 @@ function loadPage(url) {
             
             // Get the new content and #content element's class (e.g. content-with-draggable on home)
             const fetchedContent = doc.getElementById('content');
+            absolutizeRoot(fetchedContent, url);
+            absolutizeRoot(doc.getElementById('intro-overlay'), url);
             const newContent = fetchedContent.innerHTML;
             const newTitle = doc.title;
             const newNav = doc.querySelector('nav').innerHTML;
@@ -42,6 +83,7 @@ function loadPage(url) {
             contentEl.className = fetchedContent.className || '';
             document.title = newTitle;
             document.querySelector('nav').innerHTML = newNav;
+            syncIntroOverlay(doc);
 
             // Show footer only on home page: add from fetched HTML or remove if not present
             const fetchedFooter = doc.querySelector('footer.footer-bar');
