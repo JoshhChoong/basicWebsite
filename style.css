@@ -416,3 +416,186 @@ a:hover {
 span, div {
     color: inherit;
 }
+
+/* Co-op work term report */
+.coop-report {
+    padding-bottom: 3rem;
+}
+
+.coop-report h2 {
+    text-align: left;
+    margin-top: 2.25rem;
+    scroll-margin-top: 1.25rem;
+}
+
+.coop-report h3 {
+    text-align: left;
+    font-size: 1.15rem;
+    margin-top: 1.5rem;
+}
+
+.coop-kicker {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem 0.75rem;
+    margin: 0.25rem 0 1rem;
+    font-size: clamp(0.85rem, 2vw + 0.4rem, 1rem);
+    opacity: 0.9;
+}
+
+.coop-kicker span {
+    background: var(--alt-bg-color);
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+}
+
+.coop-toc {
+    background: var(--alt-bg-color);
+    border-radius: 8px;
+    padding: 0.9rem 1.1rem;
+    margin: 1.25rem 0 1.75rem;
+}
+
+.coop-toc h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    text-align: left;
+}
+
+.coop-toc ol {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.coop-toc a {
+    color: var(--link-color);
+}
+
+.coop-figure {
+    margin: 1.35rem 0;
+}
+
+.coop-figure img {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 8px;
+    background: var(--alt-bg-color);
+}
+
+.coop-figure figcaption {
+    margin-top: 0.45rem;
+    font-size: 0.9rem;
+    font-style: italic;
+    opacity: 0.85;
+    line-height: 1.45;
+}
+
+.goal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0 1.25rem;
+}
+
+.goal-card {
+    background: var(--alt-bg-color);
+    border-radius: 8px;
+    padding: 0.85rem 0.95rem;
+    border-left: 4px solid var(--cyan);
+}
+
+.goal-card--partial {
+    border-left-color: var(--yellow);
+}
+
+.goal-card h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+    text-align: left;
+}
+
+.goal-status {
+    display: inline-block;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+    opacity: 0.85;
+}
+
+.goal-card p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.coop-pipeline {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    padding: 0;
+    margin: 1rem 0 1.35rem;
+}
+
+.coop-pipeline li {
+    background: var(--alt-bg-color);
+    border-radius: 6px;
+    padding: 0.45rem 0.7rem;
+    margin: 0;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.coop-pipeline li::after {
+    content: "→";
+    color: var(--cyan);
+    font-weight: 700;
+}
+
+.coop-pipeline li:last-child::after {
+    content: none;
+}
+
+.framework-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.75rem 0 1rem;
+}
+
+.framework-chip {
+    background: var(--alt-bg-color);
+    color: var(--header-color);
+    border-radius: 4px;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.8rem;
+    font-family: "Fira Code", "Consolas", monospace;
+}
+
+.pull-quote {
+    margin: 1.5rem 0;
+    padding: 0.9rem 1.1rem;
+    border-left: 4px solid var(--cyan);
+    background: var(--alt-bg-color);
+    border-radius: 0 8px 8px 0;
+    font-size: 1.05rem;
+    line-height: 1.55;
+}
+
+.pull-quote p {
+    margin: 0;
+}
+
+.coop-ack {
+    background: var(--alt-bg-color);
+    border-radius: 8px;
+    padding: 1rem 1.15rem;
+    margin-top: 0.75rem;
+}
+
+.coop-ack p {
+    margin: 0;
+}
