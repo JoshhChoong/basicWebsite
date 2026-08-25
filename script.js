@@ -1,7 +1,5 @@
 function initializeTheme() {
-    const saved = localStorage.getItem('theme');
-    const theme = saved || 'light';
-    applyTheme(theme);
+    applyTheme('light');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -72,7 +70,7 @@ function loadPage(url) {
 //Colors theme (exposed for resume-draggable lightbulb icon)
 function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
 }
 window.applyTheme = applyTheme;
-// Colors theme default to light 
+initializeTheme();
+// Always spawn in light mode; lightbulb can still switch during the session. 
