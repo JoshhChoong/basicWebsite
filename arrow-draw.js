@@ -124,7 +124,7 @@ function init() {
 
 document.addEventListener('contentLoaded', (e) => {
   const url = e.detail?.url ?? location.href;
-  if (url.includes('applications')) {
+  if (url.includes('applications') || url.includes('coop-reports')) {
     if (rafId != null) {
       cancelAnimationFrame(rafId);
       rafId = null;

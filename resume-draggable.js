@@ -446,7 +446,7 @@ window.addEventListener('blur', resetDragState);
 
 document.addEventListener('contentLoaded', (e) => {
   const url = e.detail?.url ?? location.href;
-  const isHome = !url.includes('applications');
+  const isHome = !url.includes('applications') && !url.includes('coop-reports');
 
   if (isHome) {
     initIntroOverlay();
