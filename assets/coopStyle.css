@@ -73,6 +73,39 @@
     line-height: 1.45;
 }
 
+.coop-remote {
+    display: grid;
+    grid-template-columns: minmax(13rem, 18rem) minmax(0, 1fr);
+    gap: 1rem 1.5rem;
+    align-items: start;
+    margin: 1.25rem 0 1.75rem;
+}
+
+.coop-remote .coop-figure {
+    margin: 0;
+}
+
+.coop-remote img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.coop-remote p:first-child {
+    margin-top: 0;
+}
+
+@media (max-width: 640px) {
+    .coop-remote {
+        grid-template-columns: 1fr;
+    }
+
+    .coop-remote .coop-figure {
+        max-width: 18rem;
+        margin: 0 auto;
+    }
+}
+
 .goal-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr));
