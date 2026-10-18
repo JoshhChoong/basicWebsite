@@ -1,6 +1,6 @@
 /**
  * Makes the resume, Acrobat, and bin icons draggable (anime.js 4).
- * When close enough to another icon, animate centers into alignment. No magnetic force.
+ * When close enough to another icon, animate centers into alignment.
  *
  * SPA requirement: this module must be loaded globally in the base layout <head> of every
  * entry-point HTML (not inside #content). Scripts inserted via innerHTML are not executed,
