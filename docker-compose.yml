@@ -1,6 +1,6 @@
 services:
   web:
-    image: nginx:alpine
+    build: .
     ports:
       - "8080:80"
     volumes:

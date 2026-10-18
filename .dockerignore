@@ -1,0 +1,5 @@
+.git
+.cursor
+Dockerfile
+docker-compose.yml
+.dockerignore

@@ -1,0 +1,135 @@
+body.pdf-viewer-open {
+    overflow: hidden;
+}
+
+.pdf-viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    display: flex;
+    flex-direction: column;
+    background: rgba(7, 24, 32, 0.88);
+}
+
+.pdf-viewer[hidden] {
+    display: none !important;
+}
+
+.pdf-viewer-bar {
+    position: relative;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+}
+
+.pdf-viewer-status {
+    margin: 0;
+    color: #eee8d5;
+    font-family: "Comic Sans MS", "Bradley Hand", cursive, sans-serif;
+    font-size: clamp(1rem, 2vw, 1.35rem);
+}
+
+.pdf-viewer-close {
+    border: 0;
+    background: #eee8d5;
+    color: #073642;
+    font: inherit;
+    font-size: 1rem;
+    padding: 0.4rem 0.85rem;
+    cursor: pointer;
+}
+
+.pdf-viewer-close:hover {
+    background: #fdf6e3;
+}
+
+.pdf-viewer-stage {
+    flex: 1;
+    overflow: auto;
+    padding: 0.5rem 1rem 2.5rem;
+}
+
+.pdf-viewer.is-armed .pdf-viewer-stage {
+    touch-action: none;
+    cursor: none;
+}
+
+.pdf-desk {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 1.75rem;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.pdf-pages {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.pdf-crayon-static {
+    position: sticky;
+    top: 1.25rem;
+    flex: 0 0 auto;
+    height: min(46vh, 280px);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.pdf-crayon-static img {
+    display: block;
+    height: 100%;
+    width: auto;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    filter: drop-shadow(4px 10px 8px rgba(0, 0, 0, 0.35));
+}
+
+.pdf-crayon-static.is-armed img {
+    filter: drop-shadow(0 0 0.45rem #fdf6e3) drop-shadow(4px 10px 8px rgba(0, 0, 0, 0.35));
+}
+
+.pdf-crayon-cursor {
+    position: fixed;
+    z-index: 7;
+    height: 96px;
+    width: auto;
+    pointer-events: none;
+    visibility: hidden;
+    user-select: none;
+    -webkit-user-drag: none;
+    filter: drop-shadow(3px 6px 5px rgba(0, 0, 0, 0.3));
+}
+
+.pdf-viewer.is-armed .pdf-crayon-cursor {
+    visibility: visible;
+}
+
+.pdf-sheet {
+    position: relative;
+    background: #fff;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.pdf-sheet-page,
+.pdf-sheet-ink {
+    display: block;
+}
+
+.pdf-sheet-ink {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
