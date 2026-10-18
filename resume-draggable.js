@@ -57,14 +57,16 @@ function setDeferredIntroIconsVisible(visible) {
   });
 }
 
-function getBasePosition(el, container) {
-  let base = basePositions.get(el);
-  if (base) return base;
+function getBasePosition(el, container, refresh = false) {
+  if (!refresh) {
+    const cached = basePositions.get(el);
+    if (cached) return cached;
+  }
 
   const cr = container.getBoundingClientRect();
   const r = el.getBoundingClientRect();
 
-  base = {
+  const base = {
     left: r.left - cr.left,
     top: r.top - cr.top,
   };
@@ -75,6 +77,9 @@ function getBasePosition(el, container) {
 
 function isBin(wrapper) {
   return wrapper.classList.contains('draggable-icon-bin');
+}
+function isBinScrap(el) {
+  return el.classList.contains('bin-scrap');
 }
 function isAcrobat(wrapper) {
   return wrapper.classList.contains('draggable-icon-adobe');
@@ -113,11 +118,31 @@ function releaseDrag(el) {
   }
 }
 
+let counterBinned = false;
+
+function tallyCount() {
+  return binContents.length + (counterBinned ? 1 : 0);
+}
+
+function counterUnlocked() {
+  return binGoal > 0 && !counterBinned && binContents.length >= binGoal;
+}
+
 function swallowIntoBin(icon, binWrapper) {
   if (binAnimating || !icon || isBin(icon)) return;
   if (icon.classList.contains('icon-vanished') || icon.classList.contains('icon-expelling')) return;
   if (icon.classList.contains('site-piece')) icon.classList.add('site-piece-freed');
   icon.classList.add('icon-vanished');
+  if (isBinScrap(icon)) {
+    if (icon.classList.contains('bin-counter-count')) {
+      if (!counterUnlocked()) return;
+      counterBinned = true;
+    }
+    icon.classList.add('icon-vanished');
+    releaseDrag(icon);
+    updateBinTally();
+    return;
+  }
   if (!binContents.includes(icon)) binContents.push(icon);
   binDestroyCount = binContents.length;
   updateBinImage(binWrapper);
@@ -272,6 +297,11 @@ function shakeAndExpel(binEl, container, wrapperToDraggable, speed) {
   if (binAnimating || binContents.length === 0) return;
   binAnimating = true;
   binThrowSamples.length = 0;
+  const hint = document.querySelector('.bottom-text');
+  if (hint?.classList.contains('is-visible')) {
+    throwHintSpent = true;
+    hint.classList.remove('is-visible');
+  }
   const items = binContents.splice(0, binContents.length);
   binDestroyCount = 0;
   updateBinTally();
@@ -459,7 +489,7 @@ function checkSnap(draggableInstance, draggedEl, allWrappers, container, wrapper
     if (target === draggedEl || target.classList.contains('icon-vanished') || target.classList.contains('icon-expelling')) continue;
     if (binAnimating && isBin(target)) continue;
     const binPair = isBin(draggedEl) || isBin(target);
-    if ((isSitePiece(draggedEl) || isSitePiece(target)) && !binPair) continue;
+    if ((isSitePiece(draggedEl) || isSitePiece(target) || isBinScrap(draggedEl) || isBinScrap(target)) && !binPair) continue;
     const targetBase = getBasePosition(target, container);
     const targetD = wrapperToDraggable.get(target);
     const targetX = targetD ? targetD.x : 0;
@@ -469,6 +499,7 @@ function checkSnap(draggableInstance, draggedEl, allWrappers, container, wrapper
     if (binPair) {
       const itemEl = isBin(draggedEl) ? target : draggedEl;
       const binEl = isBin(draggedEl) ? draggedEl : target;
+      if (itemEl.classList.contains('bin-counter-count') && !counterUnlocked()) continue;
       if (!overlapsBin(itemEl, binEl)) continue;
     }
     const dx = targetCenterX - dragCenterX;
@@ -746,6 +777,33 @@ function installFlowListeners() {
   window.addEventListener('pointercancel', endFlow);
 }
 
+let scrapDraggables = [];
+
+function collectBinScraps() {
+  return [
+    binCounter?.querySelector('.bin-counter-count'),
+    binCounter?.querySelector('.bin-achievement'),
+  ].filter(Boolean);
+}
+
+function releaseScrapDraggables() {
+  scrapDraggables.forEach((draggable) => {
+    try { draggable.disable(); } catch (_) {}
+  });
+  scrapDraggables = [];
+}
+
+function pinScrapForDrag(el) {
+  const rect = el.getBoundingClientRect();
+  el.style.position = 'fixed';
+  el.style.left = `${rect.left}px`;
+  el.style.top = `${rect.top}px`;
+  el.style.width = `${rect.width}px`;
+  el.style.margin = '0';
+  el.style.zIndex = '80';
+  el.style.transform = 'none';
+}
+
 function ensureBinCounter(wrappers) {
   binGoal = wrappers.filter((el) => !isBin(el)).length;
   if (!binCounter) {
@@ -761,17 +819,26 @@ function ensureBinCounter(wrappers) {
   updateBinTally();
 }
 
+let throwHintSpent = false;
+
 function updateBinTally() {
   if (!binCounter) return;
-  const count = binContents.length;
+  const count = tallyCount();
+  const goal = binGoal + 1;
   const countEl = binCounter.querySelector('.bin-counter-count');
-  countEl.textContent = `${count} / ${binGoal} in the bin`;
+  countEl.textContent = `${count} / ${goal} in the bin`;
+  countEl.classList.toggle('is-unlocked', counterUnlocked());
   const achievement = binCounter.querySelector('.bin-achievement');
-  const complete = binGoal > 0 && count >= binGoal;
-  achievement.hidden = !complete;
+  const complete = binGoal > 0 && count >= goal;
+  if (achievement && !achievement.classList.contains('icon-vanished')) {
+    achievement.hidden = !complete;
+  }
   binCounter.classList.toggle('is-complete', complete);
-  document.querySelector('.bottom-text')?.classList.toggle('is-visible', complete);
-  if (count > lastBinCount) {
+  const hint = document.querySelector('.bottom-text');
+  if (hint && !throwHintSpent) {
+    hint.classList.toggle('is-visible', complete);
+  }
+  if (count > lastBinCount && !countEl.classList.contains('icon-vanished')) {
     window.clearTimeout(binFlashTimer);
     countEl.classList.remove('is-flashing');
     void countEl.offsetWidth;
@@ -789,9 +856,11 @@ function initResumeScope() {
   binContents.length = 0;
   binDestroyCount = 0;
   lastBinCount = 0;
+  counterBinned = !!document.querySelector('.bin-counter-count.icon-vanished');
   binAnimating = false;
   binThrowSamples.length = 0;
   binWallContact = { left: false, right: false, top: false, bottom: false };
+  releaseScrapDraggables();
 
   const wrappers = Array.from(document.querySelectorAll('.draggable-icon-wrapper, .site-piece'));
   if (!wrappers.length) return;
@@ -802,38 +871,53 @@ function initResumeScope() {
   ensureBinCounter(wrappers);
   installFlowListeners();
 
+  const scraps = collectBinScraps();
+  scraps.forEach((el) => {
+    el.classList.add('bin-scrap');
+    delete el.dataset.initialized;
+  });
+  const draggables = wrappers.concat(scraps);
+
   const container = document.body;
   console.log('[Magnetic snap] Ready. Icons:', wrappers.length, '| Snap radius:', SNAP_RADIUS, 'px');
 
-  wrappers.forEach((el) => getBasePosition(el, container));
+  draggables.forEach((el) => getBasePosition(el, container));
 
   const wrapperToDraggable = new Map();
 
   createScope({
     defaults: { ease: 'linear' },
   }).add(() => {
-    wrappers.forEach((el) => {
+    draggables.forEach((el) => {
       el.dataset.initialized = 'true';
       el.classList.add('draggable');
       const d = createDraggable(el, {
         container,
         containerFriction: 0.35,
         onGrab: () => {
+          if (isBinScrap(el)) {
+            pinScrapForDrag(el);
+            getBasePosition(el, container, true);
+            d.setX(0, false);
+            d.setY(0, false);
+            return;
+          }
           if (!isBin(el)) return;
           binThrowSamples.length = 0;
           binWallContact = binScreenWalls(el);
         },
         onDrag: () => {
           if (el.classList.contains('site-piece')) el.dataset.suppressClick = 'true';
-          checkSnap(d, el, wrappers, container, wrapperToDraggable);
+          checkSnap(d, el, draggables, container, wrapperToDraggable);
           window.updateResumeAdobeArrow?.();
         },
         onUpdate: () => {
-          checkSnap(d, el, wrappers, container, wrapperToDraggable);
+          checkSnap(d, el, draggables, container, wrapperToDraggable);
           window.updateResumeAdobeArrow?.();
           if (isBin(el) && d.grabbed) noteBinShake(d, el, container, wrapperToDraggable);
         },
       });
+      if (isBinScrap(el)) scrapDraggables.push(d);
       if (el.classList.contains('site-piece') && el.tagName === 'A') {
         el.addEventListener('click', (event) => {
           if (el.dataset.suppressClick !== 'true') return;
@@ -850,7 +934,7 @@ function initResumeScope() {
     activeDraggables = wrapperToDraggable;
     return () => {
       activeDraggables = null;
-      wrappers.forEach((el) => el.classList.remove('draggable'));
+      draggables.forEach((el) => el.classList.remove('draggable'));
     };
   });
 }
