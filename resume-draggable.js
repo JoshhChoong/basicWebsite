@@ -132,6 +132,10 @@ function counterUnlocked() {
   return binGoal > 0 && !counterBinned && countedInBin() >= binGoal;
 }
 
+function binIsFull() {
+  return binGoal > 0 && tallyCount() >= binGoal + 1;
+}
+
 function swallowIntoBin(icon, binWrapper) {
   if (binAnimating || !icon || isBin(icon)) return;
   if (icon.classList.contains('icon-vanished') || icon.classList.contains('icon-expelling')) return;
@@ -300,7 +304,7 @@ function spawnBinItems(items, binEl, container, wrapperToDraggable, speed, onIte
 }
 
 function shakeAndExpel(binEl, container, wrapperToDraggable, speed) {
-  if (binAnimating || binContents.length === 0) return;
+  if (binAnimating || !binIsFull()) return;
   binAnimating = true;
   binThrowSamples.length = 0;
   const hint = document.querySelector('.bottom-text');
@@ -328,8 +332,8 @@ function shakeAndExpel(binEl, container, wrapperToDraggable, speed) {
 }
 
 /**
- * Watch the bin's drag. Contents fly out only when the bin is thrown hard
- * into an edge of the screen.
+ * Watch the bin's drag. Contents fly out only after all 9 items are in,
+ * and only when the bin is thrown hard into an edge of the screen.
  */
 function binScreenWalls(binEl) {
   const rect = binEl.getBoundingClientRect();
@@ -342,7 +346,7 @@ function binScreenWalls(binEl) {
 }
 
 function noteBinShake(draggable, binEl, container, wrapperToDraggable) {
-  if (binAnimating || binContents.length === 0) return;
+  if (binAnimating || !binIsFull()) return;
 
   const now = performance.now();
   binThrowSamples.push({
