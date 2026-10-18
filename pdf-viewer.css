@@ -133,3 +133,45 @@ body.pdf-viewer-open {
     height: 100%;
     pointer-events: none;
 }
+
+.pdf-draw-rage {
+    position: fixed;
+    top: 4.75rem;
+    left: 50%;
+    z-index: 20;
+    margin: 0;
+    font-size: 9.6rem;
+    line-height: 1;
+    pointer-events: none;
+    opacity: 0;
+    user-select: none;
+    transform: translateX(-50%);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.pdf-draw-rage.is-on {
+    animation: pdf-rage-pop 1.4s ease forwards;
+}
+
+.pdf-viewer.is-shaking {
+    animation: pdf-screen-shake 0.55s linear;
+}
+
+@keyframes pdf-rage-pop {
+    0% { opacity: 0; transform: translateX(-50%) scale(0.72); }
+    14% { opacity: 1; transform: translateX(-50%) scale(1); }
+    70% { opacity: 1; transform: translateX(-50%) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes pdf-screen-shake {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    12% { transform: translate(-22px, 10px) rotate(-1.1deg); }
+    24% { transform: translate(20px, -12px) rotate(1.1deg); }
+    36% { transform: translate(-16px, -8px) rotate(-0.8deg); }
+    48% { transform: translate(16px, 10px) rotate(0.8deg); }
+    60% { transform: translate(-12px, 6px) rotate(-0.4deg); }
+    72% { transform: translate(10px, -6px) rotate(0.4deg); }
+    84% { transform: translate(-5px, 3px) rotate(-0.2deg); }
+}

@@ -8,7 +8,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
 
 const DRAW_CRAYON_SRC = new URL('assets/crayon.jpg', document.baseURI).href;
-const UPRIGHT_CRAYON_SRC = new URL('assets/crayon-upright.jpg', document.baseURI).href;
+const UPRIGHT_CRAYON_SRC = new URL('assets/crayon-upright.png', document.baseURI).href;
 
 let viewer;
 let stage;
@@ -102,6 +102,21 @@ export function closePdfViewer() {
   window.dispatchEvent(new CustomEvent('pdfviewerclosed'));
 }
 
+function showDrawTantrum() {
+  let rage = viewer.querySelector('.pdf-draw-rage');
+  if (!rage) {
+    rage = document.createElement('p');
+    rage.className = 'pdf-draw-rage';
+    rage.textContent = '😡😡😡';
+    viewer.append(rage);
+  }
+  rage.classList.remove('is-on');
+  viewer.classList.remove('is-shaking');
+  void viewer.offsetWidth;
+  rage.classList.add('is-on');
+  viewer.classList.add('is-shaking');
+}
+
 function onPointerDown(event) {
   if (!armed || event.button !== 0) return;
   if (event.target.closest('.pdf-crayon-static, .pdf-viewer-close')) return;
@@ -112,6 +127,7 @@ function onPointerDown(event) {
   lastTip = { x: event.clientX, y: event.clientY };
   placeCursor(event.clientX, event.clientY);
   paintSegment(lastTip, lastTip);
+  showDrawTantrum();
 }
 
 function onPointerMove(event) {
