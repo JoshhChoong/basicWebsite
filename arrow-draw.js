@@ -19,9 +19,28 @@ let dotAnimation = null;
 let rafId = null;
 let currentDotProgress = 0;
 let initialized = false;
+let arrowDismissed = false;
+
+function hideArrow() {
+  if (pathEl) {
+    pathEl.setAttribute('d', '');
+    pathEl.style.visibility = 'hidden';
+  }
+  if (dotGroupEl) dotGroupEl.style.visibility = 'hidden';
+  if (svgEl) svgEl.style.visibility = 'hidden';
+  if (dotAnimation) {
+    try { dotAnimation.cancel(); } catch (_) {}
+    dotAnimation = null;
+  }
+  if (rafId != null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+}
 
 function tick() {
   updateArrow();
+  if (arrowDismissed) return;
   updateDotPosition(currentDotProgress);
   rafId = requestAnimationFrame(tick);
 }
@@ -37,17 +56,23 @@ function getCenter(el, containerRect) {
 function updateArrow() {
   if (!containerEl || !svgEl || !pathEl || !resumeEl || !adobeEl) return;
 
+  if (
+    !arrowDismissed &&
+    (resumeEl.classList.contains('icon-vanished') || adobeEl.classList.contains('icon-vanished'))
+  ) {
+    arrowDismissed = true;
+  }
+
+  if (arrowDismissed) {
+    hideArrow();
+    return;
+  }
+
   const rect = containerEl.getBoundingClientRect();
   const w = rect.width;
   const h = rect.height;
 
-  if (resumeEl.classList.contains('icon-vanished') || adobeEl.classList.contains('icon-vanished')) {
-    pathEl.setAttribute('d', '');
-    pathEl.style.visibility = 'hidden';
-    if (dotGroupEl) dotGroupEl.style.visibility = 'hidden';
-    return;
-  }
-
+  svgEl.style.visibility = '';
   pathEl.style.visibility = '';
   if (dotGroupEl) dotGroupEl.style.visibility = '';
   const { x: x1, y: y1 } = getCenter(resumeEl, rect);
@@ -113,10 +138,19 @@ function init() {
   if (initialized) return;
   initialized = true;
 
+  window.updateResumeAdobeArrow = updateArrow;
+  if (!init.resizeBound) {
+    window.addEventListener('resize', updateArrow);
+    init.resizeBound = true;
+  }
+
+  if (arrowDismissed) {
+    hideArrow();
+    return;
+  }
+
   updateArrow();
   startDotAlongPath();
-  window.updateResumeAdobeArrow = updateArrow;
-  window.addEventListener('resize', updateArrow);
 
   if (rafId != null) cancelAnimationFrame(rafId);
   rafId = requestAnimationFrame(tick);
@@ -132,6 +166,7 @@ document.addEventListener('contentLoaded', (e) => {
     initialized = false;
     return;
   }
+  arrowDismissed = false;
   initialized = false;
   init();
 });

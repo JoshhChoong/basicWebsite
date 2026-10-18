@@ -420,17 +420,30 @@ a:hover {
 }
 
 .bin-achievement {
+    position: fixed;
+    z-index: 32;
+    width: min(92vw, 34rem);
+    margin: 0;
     pointer-events: auto;
     cursor: grab;
     user-select: none;
     touch-action: none;
+    text-align: center;
 }
 
 .bin-counter-count {
+    position: fixed;
+    top: 0.65rem;
+    z-index: 31;
+    width: max-content;
     pointer-events: none;
     cursor: default;
     user-select: none;
     touch-action: none;
+}
+
+.bin-counter-count[hidden] {
+    display: none !important;
 }
 
 .bin-counter-count.is-unlocked {
@@ -473,24 +486,20 @@ a:hover {
     margin: 0;
     background: #fdf6e3;
     color: #073642;
-    border-radius: 8px;
-    padding: 0.35rem 0.75rem;
-    font-size: 1rem;
+    border-radius: 12px;
+    padding: 1.1rem 1.4rem;
+    font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+    line-height: 1.12;
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
-    animation: achievement-pop 0.4s ease;
 }
 
 .bin-achievement[hidden] {
     display: none !important;
 }
 
-@keyframes achievement-pop {
-    0% { transform: translateY(-6px) scale(0.9); opacity: 0; }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
-}
-
 .draggable-icon-wrapper.icon-expelling,
-.site-piece.icon-expelling {
+.site-piece.icon-expelling,
+.bin-achievement.icon-expelling {
     visibility: visible;
     pointer-events: none;
     z-index: 40;
@@ -533,6 +542,7 @@ a:hover {
     margin: 0;
     color: var(--text-color);
     font-family: "Comic Sans MS", "Bradley Hand", cursive, sans-serif;
+    font-size: 2em;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.35s ease, visibility 0s linear 0.35s;

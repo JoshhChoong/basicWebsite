@@ -92,7 +92,7 @@ function resetTool() {
   setArmed(false);
 }
 
-function closePdfViewer() {
+export function closePdfViewer() {
   if (!viewer) return;
   loadToken += 1;
   resetTool();

@@ -8,7 +8,7 @@
  * Loaded once, it listens for contentLoaded and re-inits when home content appears.
  */
 import { createScope, createDraggable, animate } from 'https://cdn.jsdelivr.net/npm/animejs@4.0.0/+esm';
-import { openPdfViewer } from './pdf-viewer.js';
+import { openPdfViewer, closePdfViewer } from './pdf-viewer.js';
 
 const SNAP_RADIUS = 1670;
 /** Below this distance we animate centers into alignment. */
@@ -120,29 +120,31 @@ function releaseDrag(el) {
 
 let counterBinned = false;
 
+function countedInBin() {
+  return binContents.filter((el) => !el.classList.contains('bin-achievement')).length;
+}
+
 function tallyCount() {
-  return binContents.length + (counterBinned ? 1 : 0);
+  return countedInBin() + (counterBinned ? 1 : 0);
 }
 
 function counterUnlocked() {
-  return binGoal > 0 && !counterBinned && binContents.length >= binGoal;
+  return binGoal > 0 && !counterBinned && countedInBin() >= binGoal;
 }
 
 function swallowIntoBin(icon, binWrapper) {
   if (binAnimating || !icon || isBin(icon)) return;
   if (icon.classList.contains('icon-vanished') || icon.classList.contains('icon-expelling')) return;
   if (icon.classList.contains('site-piece')) icon.classList.add('site-piece-freed');
-  icon.classList.add('icon-vanished');
-  if (isBinScrap(icon)) {
-    if (icon.classList.contains('bin-counter-count')) {
-      if (!counterUnlocked()) return;
-      counterBinned = true;
-    }
+  if (icon.classList.contains('bin-counter-count')) {
+    if (!counterUnlocked()) return;
+    counterBinned = true;
     icon.classList.add('icon-vanished');
     releaseDrag(icon);
     updateBinTally();
     return;
   }
+  icon.classList.add('icon-vanished');
   if (!binContents.includes(icon)) binContents.push(icon);
   binDestroyCount = binContents.length;
   updateBinImage(binWrapper);
@@ -259,6 +261,10 @@ function spawnBinItems(items, binEl, container, wrapperToDraggable, speed, onIte
     itemD.setX(start.x, false);
     itemD.setY(start.y, false);
     item.classList.remove('icon-vanished');
+    if (item.classList.contains('bin-achievement')) {
+      item.hidden = false;
+      item.dataset.released = 'true';
+    }
     item.classList.add('icon-expelling');
 
     const halfW = Math.max(item.offsetWidth, 48) / 2;
@@ -371,8 +377,8 @@ function noteBinShake(draggable, binEl, container, wrapperToDraggable) {
 }
 
 /**
- * When two icons have aligned: bin + anything → other vanishes; Acrobat + Resume → open the PDF on this page.
- * Only opens PDF when isEnteringSnap is true (resume came into Acrobat), not when re-snapping after dragging out.
+ * When two icons have aligned: bin + anything → other vanishes.
+ * Resume and Acrobat keep their stacking order. The PDF opens when the snap starts.
  */
 function runAlignedBehaviors(draggedEl, targetEl, isEnteringSnap) {
   if (isBin(draggedEl)) {
@@ -390,16 +396,12 @@ function runAlignedBehaviors(draggedEl, targetEl, isEnteringSnap) {
     if (targetEl.nextSibling !== draggedEl) {
       targetEl.insertAdjacentElement('afterend', draggedEl);
     }
-    if (isEnteringSnap && !skipNextPdfOpen) {
-      const resumeEl = document.querySelector('.draggable-icon-resume:not(.icon-vanished)');
-      if (resumeEl) openResumePdf(resumeEl);
-    }
     return;
   }
 }
 
 /**
- * Open resume PDF on this page. Called from runAlignedBehaviors after the icon has animated to center.
+ * Open resume PDF on this page. Called as soon as resume and Acrobat snap, before the intro plays behind it.
  */
 function openResumePdf(resumeWrapper) {
   const href = resumeWrapper.getAttribute('data-resume-href');
@@ -426,6 +428,15 @@ function alignCenters(d, draggedEl, targetEl, container, isEnteringSnap) {
 
   d.velocityX = 0;
   d.velocityY = 0;
+
+  const resumeAcrobatPair =
+    (isResume(draggedEl) && isAcrobat(targetEl)) || (isAcrobat(draggedEl) && isResume(targetEl));
+  if (resumeAcrobatPair && isEnteringSnap && !skipNextPdfOpen) {
+    const resumeEl = document.querySelector('.draggable-icon-resume:not(.icon-vanished)');
+    if (resumeEl) openResumePdf(resumeEl);
+    const overlay = document.getElementById('intro-overlay');
+    if (overlay && overlay.dataset.revealed !== 'true') revealIntro();
+  }
 
   const endX = d.x + dx;
   const endY = d.y + dy;
@@ -555,6 +566,24 @@ function checkSnap(draggableInstance, draggedEl, allWrappers, container, wrapper
   }
 }
 
+function revealIntro() {
+  const overlay = document.getElementById('intro-overlay');
+  if (!overlay || overlay.dataset.revealed === 'true') return;
+  overlay.dataset.revealed = 'true';
+  overlay.classList.add('is-revealing');
+
+  window.setTimeout(() => {
+    overlay.classList.add('is-hidden');
+    overlay.setAttribute('aria-hidden', 'true');
+    window.setTimeout(() => {
+      overlay.remove();
+      setDeferredIntroIconsVisible(true);
+      introFinished = true;
+      syncBinCounterVisibility();
+    }, INTRO_FADE_MS + 30);
+  }, INTRO_REVEAL_MS);
+}
+
 function initIntroOverlay() {
   const overlay = document.getElementById('intro-overlay');
   if (!overlay) {
@@ -571,35 +600,7 @@ function initIntroOverlay() {
   overlay.classList.remove('is-revealing', 'is-hidden');
   overlay.dataset.revealed = 'false';
   overlay.setAttribute('aria-hidden', 'false');
-
-  const revealIntro = () => {
-    if (overlay.dataset.revealed === 'true') return;
-    overlay.dataset.revealed = 'true';
-    overlay.classList.add('is-revealing');
-
-    window.setTimeout(() => {
-      overlay.classList.add('is-hidden');
-      overlay.setAttribute('aria-hidden', 'true');
-      window.setTimeout(() => {
-        overlay.remove();
-        setDeferredIntroIconsVisible(true);
-        introFinished = true;
-        syncBinCounterVisibility();
-      }, INTRO_FADE_MS + 30);
-    }, INTRO_REVEAL_MS);
-  };
-
-  const resumeTrigger = document.querySelector('.draggable-icon-resume');
-  if (!resumeTrigger) return;
-
-  const onResumeInteract = () => revealIntro();
-  resumeTrigger.addEventListener('pointerdown', onResumeInteract, { once: true, capture: true });
-  resumeTrigger.addEventListener('click', onResumeInteract, { once: true, capture: true });
-
-  introRevealCleanup = () => {
-    resumeTrigger.removeEventListener('pointerdown', onResumeInteract, { capture: true });
-    resumeTrigger.removeEventListener('click', onResumeInteract, { capture: true });
-  };
+  introRevealCleanup = null;
 }
 
 function isResumePage(url = location.href) {
@@ -617,7 +618,12 @@ let onResumePage = isResumePage();
 
 function syncBinCounterVisibility() {
   if (!binCounter) return;
-  binCounter.hidden = !(onResumePage && introFinished && pdfClosedOnce);
+  const show = onResumePage && introFinished && pdfClosedOnce;
+  binCounter.hidden = !show;
+  const countEl = counterPill();
+  if (!countEl || countEl.classList.contains('icon-vanished')) return;
+  countEl.hidden = !show;
+  if (show) placeCounterPill(countEl);
 }
 
 window.addEventListener('pdfviewerclosed', () => {
@@ -779,10 +785,14 @@ function installFlowListeners() {
 
 let scrapDraggables = [];
 
+function counterPill() {
+  return document.querySelector('.bin-counter-count');
+}
+
 function collectBinScraps() {
   return [
-    binCounter?.querySelector('.bin-counter-count'),
-    binCounter?.querySelector('.bin-achievement'),
+    counterPill(),
+    document.querySelector('.bin-achievement'),
   ].filter(Boolean);
 }
 
@@ -791,6 +801,73 @@ function releaseScrapDraggables() {
     try { draggable.disable(); } catch (_) {}
   });
   scrapDraggables = [];
+}
+
+let counterMoved = false;
+let achievementMoved = false;
+let confettiPlayed = false;
+
+function ensureCanvasConfetti() {
+  if (typeof window.confetti === 'function') return Promise.resolve(window.confetti);
+  if (!ensureCanvasConfetti.promise) {
+    ensureCanvasConfetti.promise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@latest/dist/confetti.browser.min.js';
+      script.onload = () => resolve(window.confetti);
+      script.onerror = reject;
+      document.head.append(script);
+    });
+  }
+  return ensureCanvasConfetti.promise;
+}
+
+function burstCanvasConfetti() {
+  const shoot = window.confetti;
+  if (typeof shoot !== 'function') return;
+  const colors = ['#859900', '#268bd2', '#cb4b16', '#d33682', '#b58900', '#2aa198'];
+  const base = { particleCount: 80, spread: 62, ticks: 380, startVelocity: 46, colors, zIndex: 45 };
+  shoot({ ...base, angle: 60, origin: { x: 0, y: 0.62 } });
+  shoot({ ...base, angle: 120, origin: { x: 1, y: 0.62 } });
+}
+
+function playSideConfetti() {
+  if (confettiPlayed) return;
+  confettiPlayed = true;
+  ensureCanvasConfetti().then(() => burstCanvasConfetti()).catch(() => {});
+}
+
+function placeAchievement(el) {
+  if (!el || el.hidden || achievementMoved || el.classList.contains('icon-vanished')) return;
+  if (el.parentElement !== document.body) document.body.append(el);
+  el.style.position = 'fixed';
+  el.style.zIndex = '32';
+  el.style.margin = '0';
+  el.style.transform = 'none';
+  el.style.left = '0px';
+  el.style.top = '0px';
+  el.style.left = `${Math.max(8, (window.innerWidth - el.offsetWidth) / 2)}px`;
+  el.style.top = `${Math.max(8, (window.innerHeight - el.offsetHeight) / 2)}px`;
+  const draggable = activeDraggables?.get(el);
+  if (!draggable) return;
+  getBasePosition(el, document.body, true);
+  draggable.setX(0, false);
+  draggable.setY(0, false);
+}
+
+function placeCounterPill(el) {
+  if (!el || el.hidden || counterMoved || el.classList.contains('icon-vanished')) return;
+  if (el.parentElement !== document.body) document.body.append(el);
+  el.style.position = 'fixed';
+  el.style.top = '0.65rem';
+  el.style.zIndex = '31';
+  if (!el.classList.contains('is-flashing')) el.style.transform = 'none';
+  el.style.left = '0px';
+  el.style.left = `${Math.max(8, (window.innerWidth - el.offsetWidth) / 2)}px`;
+  const draggable = activeDraggables?.get(el);
+  if (!draggable) return;
+  getBasePosition(el, document.body, true);
+  draggable.setX(0, false);
+  draggable.setY(0, false);
 }
 
 function pinScrapForDrag(el) {
@@ -811,7 +888,7 @@ function ensureBinCounter(wrappers) {
     binCounter.className = 'bin-counter';
     binCounter.innerHTML = `
       <span class="bin-counter-count"></span>
-      <p class="bin-achievement" hidden>You got everything in the bin!</p>
+      <p class="bin-achievement" hidden>Congratulations, you destroyed my website!</p>
     `;
     document.body.append(binCounter);
   }
@@ -825,13 +902,23 @@ function updateBinTally() {
   if (!binCounter) return;
   const count = tallyCount();
   const goal = binGoal + 1;
-  const countEl = binCounter.querySelector('.bin-counter-count');
+  const countEl = counterPill();
+  if (!countEl) return;
   countEl.textContent = `${count} / ${goal} in the bin`;
   countEl.classList.toggle('is-unlocked', counterUnlocked());
-  const achievement = binCounter.querySelector('.bin-achievement');
+  const achievement = document.querySelector('.bin-achievement');
   const complete = binGoal > 0 && count >= goal;
-  if (achievement && !achievement.classList.contains('icon-vanished')) {
-    achievement.hidden = !complete;
+  if (achievement) {
+    const out = achievement.classList.contains('icon-vanished')
+      || achievement.classList.contains('icon-expelling');
+    if (!out && (complete || achievement.dataset.released === 'true')) {
+      const firstShow = achievement.hidden && complete;
+      achievement.hidden = false;
+      if (complete) placeAchievement(achievement);
+      if (firstShow) playSideConfetti();
+    } else if (!out) {
+      achievement.hidden = true;
+    }
   }
   binCounter.classList.toggle('is-complete', complete);
   const hint = document.querySelector('.bottom-text');
@@ -848,6 +935,47 @@ function updateBinTally() {
     }, 420);
   }
   lastBinCount = count;
+  placeCounterPill(countEl);
+}
+
+let resumeScope = null;
+
+function teardownResumeScope() {
+  try { resumeScope?.revert(); } catch (_) {}
+  resumeScope = null;
+  if (activeDraggables) {
+    activeDraggables.forEach((d) => {
+      try { d.disable(); } catch (_) {}
+    });
+  }
+  activeDraggables = null;
+  scrapDraggables = [];
+}
+
+function resetHomeExperience() {
+  teardownResumeScope();
+  document.querySelector('.bin-counter')?.remove();
+  document.querySelector('.bin-counter-count')?.remove();
+  document.querySelector('.bin-achievement')?.remove();
+  binCounter = null;
+  binContents.length = 0;
+  binDestroyCount = 0;
+  lastBinCount = 0;
+  counterBinned = false;
+  counterMoved = false;
+  achievementMoved = false;
+  confettiPlayed = false;
+  throwHintSpent = false;
+  binAnimating = false;
+  binThrowSamples.length = 0;
+  binWallContact = { left: false, right: false, top: false, bottom: false };
+  introFinished = false;
+  pdfClosedOnce = false;
+  isSnapping = false;
+  activeFlow = null;
+  teardownResumeScope();
+  closePdfViewer();
+  pdfClosedOnce = false;
 }
 
 function initResumeScope() {
@@ -856,7 +984,7 @@ function initResumeScope() {
   binContents.length = 0;
   binDestroyCount = 0;
   lastBinCount = 0;
-  counterBinned = !!document.querySelector('.bin-counter-count.icon-vanished');
+  counterBinned = !!counterPill()?.classList.contains('icon-vanished');
   binAnimating = false;
   binThrowSamples.length = 0;
   binWallContact = { left: false, right: false, top: false, bottom: false };
@@ -885,7 +1013,7 @@ function initResumeScope() {
 
   const wrapperToDraggable = new Map();
 
-  createScope({
+  resumeScope = createScope({
     defaults: { ease: 'linear' },
   }).add(() => {
     draggables.forEach((el) => {
@@ -895,6 +1023,17 @@ function initResumeScope() {
         container,
         containerFriction: 0.35,
         onGrab: () => {
+          if (el.classList.contains('bin-counter-count')) {
+            if (!counterUnlocked()) return;
+            counterMoved = true;
+            getBasePosition(el, container, true);
+            return;
+          }
+          if (el.classList.contains('bin-achievement')) {
+            achievementMoved = true;
+            getBasePosition(el, container, true);
+            return;
+          }
           if (isBinScrap(el)) {
             pinScrapForDrag(el);
             getBasePosition(el, container, true);
@@ -979,9 +1118,14 @@ document.addEventListener('contentLoaded', (e) => {
   syncBinCounterVisibility();
 
   if (isHome) {
+    resetHomeExperience();
     initIntroOverlay();
     initResumeScope();
   } else {
+    document.querySelector('.bin-achievement')?.setAttribute('hidden', '');
+    if (binCounter) binCounter.hidden = true;
+    const countEl = counterPill();
+    if (countEl) countEl.hidden = true;
     introRevealCleanup?.();
   }
 });
