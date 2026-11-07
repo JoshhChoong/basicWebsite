@@ -34,6 +34,8 @@ let binAnimating = false;
 const binThrowSamples = [];
 /** Which screen edges the bin was already touching, so resting there does not re-trigger. */
 let binWallContact = { left: false, right: false, top: false, bottom: false };
+/** After the first full-bin wall throw, later throws work even when the bin is not full. */
+let binWallUnlocked = false;
 /** Map of wrapper element -> draggable instance, set during init so we can release on tab switch. */
 let activeDraggables = null;
 /** True briefly after resetDragState re-enables draggables so we don't open PDF from a spurious snap. */
@@ -303,10 +305,16 @@ function spawnBinItems(items, binEl, container, wrapperToDraggable, speed, onIte
   });
 }
 
+function canThrowBinAtWall() {
+  if (binIsFull()) return true;
+  return binWallUnlocked && binContents.length >= 1;
+}
+
 function shakeAndExpel(binEl, container, wrapperToDraggable, speed) {
-  if (binAnimating || !binIsFull()) return;
+  if (binAnimating || !canThrowBinAtWall()) return;
   binAnimating = true;
   binThrowSamples.length = 0;
+  binWallUnlocked = true;
   const hint = document.querySelector('.bottom-text');
   if (hint?.classList.contains('is-visible')) {
     throwHintSpent = true;
@@ -332,8 +340,8 @@ function shakeAndExpel(binEl, container, wrapperToDraggable, speed) {
 }
 
 /**
- * Watch the bin's drag. Contents fly out only after all 9 items are in,
- * and only when the bin is thrown hard into an edge of the screen.
+ * Watch the bin's drag. The first wall slam needs a full bin; after that,
+ * any hard throw into a screen edge shakes/expels again.
  */
 function binScreenWalls(binEl) {
   const rect = binEl.getBoundingClientRect();
@@ -346,7 +354,7 @@ function binScreenWalls(binEl) {
 }
 
 function noteBinShake(draggable, binEl, container, wrapperToDraggable) {
-  if (binAnimating || !binIsFull()) return;
+  if (binAnimating || !canThrowBinAtWall()) return;
 
   const now = performance.now();
   binThrowSamples.push({
@@ -970,6 +978,7 @@ function resetHomeExperience() {
   achievementMoved = false;
   confettiPlayed = false;
   throwHintSpent = false;
+  binWallUnlocked = false;
   binAnimating = false;
   binThrowSamples.length = 0;
   binWallContact = { left: false, right: false, top: false, bottom: false };

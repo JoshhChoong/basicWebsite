@@ -1,11 +1,14 @@
 /**
  * In-page resume viewer. A crayon beside the page can be turned on so a smaller
  * crayon follows the cursor and leaves a mark while the pointer is held down.
+ * Pages use PDF.js canvas + text + link layers so links and selection work.
  */
 import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+
+const { TextLayer } = pdfjsLib;
 
 const DRAW_CRAYON_SRC = new URL('assets/crayon.jpg', document.baseURI).href;
 const UPRIGHT_CRAYON_SRC = new URL('assets/crayon-upright.png', document.baseURI).href;
@@ -24,6 +27,10 @@ let loadToken = 0;
 let armed = false;
 let drawing = false;
 let lastTip = null;
+let currentPdf = null;
+let lastLayoutKey = '';
+let resizeTimer = 0;
+let resizeListening = false;
 
 function ensureViewer() {
   if (viewer) return;
@@ -72,6 +79,54 @@ function ensureViewer() {
   viewer.addEventListener('pointercancel', endStroke);
 
   document.body.appendChild(viewer);
+  ensureResizeListening();
+}
+
+function ensureResizeListening() {
+  if (resizeListening) return;
+  resizeListening = true;
+  window.addEventListener('resize', scheduleRerender);
+  window.visualViewport?.addEventListener('resize', scheduleRerender);
+}
+
+function getLayoutKey() {
+  const vvScale = window.visualViewport?.scale || 1;
+  return [
+    Math.round(window.innerWidth),
+    Math.round((window.devicePixelRatio || 1) * 100),
+    Math.round(vvScale * 100),
+  ].join(':');
+}
+
+function pageCssWidth() {
+  return Math.min(860, Math.max(240, window.innerWidth - 230));
+}
+
+function scheduleRerender() {
+  if (!viewer || viewer.hidden || !currentPdf) return;
+  if (getLayoutKey() === lastLayoutKey) return;
+  clearTimeout(resizeTimer);
+  resizeTimer = window.setTimeout(() => {
+    void rerenderAllPages();
+  }, 140);
+}
+
+async function rerenderAllPages() {
+  if (!viewer || viewer.hidden || !currentPdf) return;
+  const key = getLayoutKey();
+  if (key === lastLayoutKey) return;
+
+  const token = loadToken;
+  const scrollTop = stage.scrollTop;
+  const sheets = [...pagesEl.querySelectorAll('.pdf-sheet')];
+  lastLayoutKey = key;
+
+  for (let i = 0; i < sheets.length; i++) {
+    await renderPage(currentPdf, i + 1, sheets[i]);
+    if (token !== loadToken) return;
+  }
+
+  stage.scrollTop = scrollTop;
 }
 
 function setArmed(next) {
@@ -95,7 +150,11 @@ function resetTool() {
 export function closePdfViewer() {
   if (!viewer) return;
   loadToken += 1;
+  clearTimeout(resizeTimer);
+  currentPdf = null;
+  lastLayoutKey = '';
   resetTool();
+  if (crayonButton) crayonButton.style.height = '';
   viewer.hidden = true;
   document.body.classList.remove('pdf-viewer-open');
   pagesEl.replaceChildren();
@@ -304,30 +363,115 @@ function prepareCutout(src, forDrawing) {
   });
 }
 
-async function renderPage(pdf, pageNumber) {
+async function renderLinkLayer(page, viewport, layer) {
+  layer.replaceChildren();
+  const annotations = await page.getAnnotations({ intent: 'display' });
+
+  for (const annotation of annotations) {
+    if (annotation.subtype !== 'Link') continue;
+
+    const rect = viewport.convertToViewportRectangle(annotation.rect);
+    const left = Math.min(rect[0], rect[2]);
+    const top = Math.min(rect[1], rect[3]);
+    const width = Math.abs(rect[2] - rect[0]);
+    const height = Math.abs(rect[3] - rect[1]);
+    if (width < 1 || height < 1) continue;
+
+    let el;
+    if (annotation.url) {
+      el = document.createElement('a');
+      el.href = annotation.url;
+      el.target = '_blank';
+      el.rel = 'noopener noreferrer';
+      el.title = annotation.url;
+    } else if (annotation.dest != null) {
+      el = document.createElement('a');
+      el.href = '#';
+      el.addEventListener('click', async (event) => {
+        event.preventDefault();
+        if (!currentPdf) return;
+        try {
+          const dest =
+            typeof annotation.dest === 'string'
+              ? await currentPdf.getDestination(annotation.dest)
+              : annotation.dest;
+          if (!dest) return;
+          const pageRef = dest[0];
+          const pageIndex = await currentPdf.getPageIndex(pageRef);
+          pagesEl.children[pageIndex]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (_) {}
+      });
+    } else {
+      continue;
+    }
+
+    el.className = 'pdf-link-annotation';
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+    el.style.width = `${width}px`;
+    el.style.height = `${height}px`;
+    layer.append(el);
+  }
+}
+
+async function renderPage(pdf, pageNumber, existingSheet = null) {
   const page = await pdf.getPage(pageNumber);
   const unscaled = page.getViewport({ scale: 1 });
-  const maxWidth = Math.min(860, Math.max(240, window.innerWidth - 230));
+  const maxWidth = pageCssWidth();
   const viewport = page.getViewport({ scale: maxWidth / unscaled.width });
   const outputScale = window.devicePixelRatio || 1;
+  const cssW = viewport.width;
+  const cssH = viewport.height;
 
-  const sheet = document.createElement('article');
-  sheet.className = 'pdf-sheet';
+  let sheet = existingSheet;
+  if (!sheet) {
+    sheet = document.createElement('article');
+    sheet.className = 'pdf-sheet';
+    sheet.dataset.pageNumber = String(pageNumber);
 
-  const pageCanvas = document.createElement('canvas');
-  pageCanvas.className = 'pdf-sheet-page';
-  const ink = document.createElement('canvas');
-  ink.className = 'pdf-sheet-ink';
+    const pageCanvas = document.createElement('canvas');
+    pageCanvas.className = 'pdf-sheet-page';
+    const textLayerDiv = document.createElement('div');
+    textLayerDiv.className = 'textLayer pdf-sheet-text';
+    const linkLayer = document.createElement('div');
+    linkLayer.className = 'pdf-sheet-links';
+    const ink = document.createElement('canvas');
+    ink.className = 'pdf-sheet-ink';
 
-  for (const canvas of [pageCanvas, ink]) {
-    canvas.width = Math.floor(viewport.width * outputScale);
-    canvas.height = Math.floor(viewport.height * outputScale);
-    canvas.style.width = `${viewport.width}px`;
-    canvas.style.height = `${viewport.height}px`;
+    sheet.append(pageCanvas, textLayerDiv, linkLayer, ink);
+    pagesEl.append(sheet);
   }
 
-  sheet.append(pageCanvas, ink);
-  pagesEl.append(sheet);
+  const pageCanvas = sheet.querySelector('.pdf-sheet-page');
+  const textLayerDiv = sheet.querySelector('.pdf-sheet-text');
+  const linkLayer = sheet.querySelector('.pdf-sheet-links');
+  const ink = sheet.querySelector('.pdf-sheet-ink');
+
+  let inkBitmap = null;
+  if (ink.width > 0 && ink.height > 0) {
+    try {
+      inkBitmap = await createImageBitmap(ink);
+    } catch (_) {}
+  }
+
+  sheet.style.width = `${cssW}px`;
+  sheet.style.height = `${cssH}px`;
+
+  if (pageNumber === 1 && crayonButton) {
+    crayonButton.style.height = `${Math.round(cssH * 0.5)}px`;
+  }
+
+  for (const canvas of [pageCanvas, ink]) {
+    canvas.width = Math.floor(cssW * outputScale);
+    canvas.height = Math.floor(cssH * outputScale);
+    canvas.style.width = `${cssW}px`;
+    canvas.style.height = `${cssH}px`;
+  }
+
+  if (inkBitmap) {
+    ink.getContext('2d').drawImage(inkBitmap, 0, 0, ink.width, ink.height);
+    inkBitmap.close?.();
+  }
 
   const transform = outputScale === 1 ? null : [outputScale, 0, 0, outputScale, 0, 0];
   await page.render({
@@ -335,11 +479,27 @@ async function renderPage(pdf, pageNumber) {
     viewport,
     transform,
   }).promise;
+
+  textLayerDiv.replaceChildren();
+  textLayerDiv.style.width = `${cssW}px`;
+  textLayerDiv.style.height = `${cssH}px`;
+  textLayerDiv.style.setProperty('--scale-factor', String(viewport.scale));
+
+  const textLayer = new TextLayer({
+    textContentSource: await page.getTextContent(),
+    container: textLayerDiv,
+    viewport,
+  });
+  await textLayer.render();
+  await renderLinkLayer(page, viewport, linkLayer);
 }
 
 export async function openPdfViewer(pdfUrl) {
   ensureViewer();
   const token = ++loadToken;
+  clearTimeout(resizeTimer);
+  currentPdf = null;
+  lastLayoutKey = '';
   resetTool();
   viewer.hidden = false;
   document.body.classList.add('pdf-viewer-open');
@@ -356,6 +516,7 @@ export async function openPdfViewer(pdfUrl) {
     ]);
     if (token !== loadToken) return;
 
+    currentPdf = pdf;
     crayonButton.querySelector('img').src = uprightUrl;
     crayonCursor.src = drawUrl;
     await Promise.all([
@@ -372,9 +533,11 @@ export async function openPdfViewer(pdfUrl) {
         statusEl.textContent = 'Click the crayon, then hold on the page to draw.';
       }
     }
+    lastLayoutKey = getLayoutKey();
   } catch (error) {
     if (token !== loadToken) return;
     console.error(error);
+    currentPdf = null;
     statusEl.textContent = 'Could not open the PDF.';
   }
 }

@@ -46,13 +46,13 @@
             The overall goal with this project was to build a Retrieval-Augmented Generation 
             (RAG) system focused on Canadian drone rules. This project was designed to create
             easily accesible infromation for the public to understand, as I found that geographical
-            jursticiional differences in drone rules were not well understood. I wanted to
+             jurisdictional differences in drone legislation were not well understood. I wanted to
             to get familiar with a full RAG pipeline: ingesting source documents, chunking and
              embedding them, storing vectors in a database, and generating answers with cited 
              sources.
         </p>
         <p>
-            I implemented a pipeline that ingests JSON and HTML, chunks and cleans the text, embeds it with sentence-transformers (with an optional Gemini API fallback), and stores vectors in ChromaDB. At query time, the system retrieves relevant chunks and uses an LLM via OpenRouter or Google Gemini to generate an answer with source citations. Through building this, I learned that data hygiene stripping boilerplate, preserving metadata like title and URL, and using overlapping chunks makes a real difference in retrieval quality and traceability. The repo also includes an AutoImmunePipeline concept to detect and mitigate data poisoning and jurisdiction-mismatched content, which felt like good practice for a public-policy RAG use case.
+            I implemented a pipeline that ingests JSON and HTML, chunks and cleans the text, embeds it with sentence-transformers and stores vectors in ChromaDB. At query time, the system retrieves relevant chunks and uses an LLM to generate an answer with source citations. Through building this, I learned data hygiene preprocessing techniques, the importance of preserving metadata like title and URL, and using that balancing overlapping chunks makes a significant difference in retrieval quality and traceability. The repo also includes an AutoImmunePipeline concept to detect and mitigate data poisoning and jurisdiction-mismatched content, allowing users to add new information to create a "living database", while identifying conflicting information to preserve information validity. 
         </p>
         <p>
             I learned a lot about RAG fundamentals and how to keep a system resilient under rate limits and API quotas by using multi-layer fallbacks (local vs API embeddings, LLM model fallbacks, and quota-aware retries). Steps for future development would include expanding the rule corpus, tuning chunk sizes and overlap, and experimenting with different embedding models.
@@ -83,10 +83,7 @@
 
         <h2 id="ragSection3">3. Learning Takeaways</h2>
         <p>
-            A practical RAG pipeline text cleaning, sensible chunking, embeddings, vector search, and context-aware prompt construction really does yield focused, source-backed answers. Multi-layer fallbacks (local vs API embeddings, LLM model fallbacks, quota-aware retries) keep the system usable when APIs throttle or run out of credits.
-        </p>
-        <p>
-            It is worth noting that stripping boilerplate, preserving metadata (title/URL), and using overlapping chunks improved retrieval quality and made it easier to trace answers back to the source. The repo’s AutoImmunePipeline concept for detecting data poisoning and jurisdiction-mismatched content is a good practice for any public-policy RAG application.
+            A practical RAG pipeline text cleaning, sensible chunking, embeddings, vector search, and context-aware prompt construction is extremely effective at eliminating LLM hallucinations. Multi-layer fallbacks (local vs API embeddings, LLM model fallbacks, quota-aware retries) keep the system usable when APIs throttle or run out of credits. To ensure that the RAG system remains accurate over time as new legislation comes out, creating a "living" database with detection for information conflicts is essential. 
         </p>
     </div>
 </body>
